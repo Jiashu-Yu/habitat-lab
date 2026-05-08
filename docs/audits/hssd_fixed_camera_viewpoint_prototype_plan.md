@@ -18,6 +18,7 @@ For the target policy/evaluation setup, the action space does not include `look_
 
 - Prototype script: `tools/hssd_viewpoint/hssd_fixed_camera_viewpoint_prototype.py`
 - Linux wrapper: `tools/hssd_viewpoint/run_fixed_camera_viewpoint_prototype.sh`
+- Static output analyzer: `tools/hssd_viewpoint/analyze_fixed_camera_viewpoint_output.py`
 - Default output directory: `outputs/hssd_fixed_camera_viewpoint_prototype/`
 
 Generated outputs are ignored by git via repo-root `.gitignore`.
@@ -246,3 +247,11 @@ For a small server run:
 6. Tune thresholds for fixed-camera visibility.
 7. Add a stronger rigid-object matching method if template+nearest-center is unreliable.
 8. Add final writer for ObjectNav-compatible `view_points` only after the visibility audit is trusted.
+
+After a small/full run, summarize the current JSON schema with:
+
+```bash
+python tools/hssd_viewpoint/analyze_fixed_camera_viewpoint_output.py \
+  --input-json outputs/hssd_fixed_camera_viewpoint_prototype/hssd_fixed_camera_viewpoint_prototype.json \
+  --output-dir outputs/hssd_fixed_camera_viewpoint_analysis
+```

@@ -23,4 +23,14 @@ Final target-mask construction uses an instance-level sentinel semantic ID assig
 
 When `--debug-images` is enabled, each saved candidate writes three images: RGB, binary sentinel mask, and RGB+mask overlay. Large/full-frame mask flags are diagnostics for camera/object geometry and candidate quality; they do not automatically reject a candidate.
 
+Use `analyze_fixed_camera_viewpoint_output.py` to summarize a completed JSON run without importing Habitat:
+
+```bash
+python tools/hssd_viewpoint/analyze_fixed_camera_viewpoint_output.py \
+  --input-json outputs/hssd_fixed_camera_viewpoint_prototype/hssd_fixed_camera_viewpoint_prototype.json \
+  --output-dir outputs/hssd_fixed_camera_viewpoint_analysis
+```
+
+The analyzer understands the current schema, `object_results[*].object` plus `object_results[*].candidate_results`, and writes JSON/CSV/Markdown tables for sentinel-positive, heuristic-only, and quality-flagged candidates.
+
 Runtime outputs should go under repo-root `outputs/`, which is ignored by git. Do not commit rendered media, debug images, generated viewpoint shards, or logs.

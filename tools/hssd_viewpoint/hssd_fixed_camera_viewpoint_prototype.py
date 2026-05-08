@@ -121,7 +121,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--debug-images",
         action="store_true",
-        help="In non-dry-run mode, save RGB and target-mask debug PNGs under output-dir/debug_images.",
+        help=(
+            "In non-dry-run mode, save RGB, target-mask, and overlay debug "
+            "PNGs under output-dir/debug_images."
+        ),
     )
     parser.add_argument("--seed", type=int, default=13, help="Random seed.")
 
