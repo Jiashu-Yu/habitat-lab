@@ -399,6 +399,56 @@ def write_category_csv(path: Path, summary: Dict[str, Any]) -> None:
             writer.writerow(row)
 
 
+def write_object_csv(path: Path, summary: Dict[str, Any]) -> None:
+    fields = [
+        "status",
+        "category",
+        "scene_id",
+        "instance_index",
+        "object_name",
+        "template_name",
+        "candidate_count",
+        "accepted_count",
+        "review_count",
+        "rejected_count",
+        "accepted_candidate_indices",
+        "review_candidate_indices",
+        "review_images",
+    ]
+    with path.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fields)
+        writer.writeheader()
+        for record in summary["object_records"]:
+            accepted = record.get("accepted_viewpoints") or []
+            review = record.get("review_viewpoints") or []
+            review_images: List[str] = []
+            for row in review:
+                review_images.extend(row.get("debug_review_images") or [])
+            writer.writerow(
+                {
+                    "status": record.get("status"),
+                    "category": record.get("category"),
+                    "scene_id": record.get("scene_id"),
+                    "instance_index": record.get("instance_index"),
+                    "object_name": record.get("object_name"),
+                    "template_name": record.get("template_name"),
+                    "candidate_count": record.get("candidate_count"),
+                    "accepted_count": record.get("accepted_count"),
+                    "review_count": record.get("review_count"),
+                    "rejected_count": record.get("rejected_count"),
+                    "accepted_candidate_indices": json.dumps(
+                        [row.get("candidate_index") for row in accepted],
+                        ensure_ascii=False,
+                    ),
+                    "review_candidate_indices": json.dumps(
+                        [row.get("candidate_index") for row in review],
+                        ensure_ascii=False,
+                    ),
+                    "review_images": json.dumps(review_images, ensure_ascii=False),
+                }
+            )
+
+
 def format_float(value: Any) -> str:
     try:
         return f"{float(value):.4f}"
@@ -490,6 +540,18 @@ def build_markdown(
 
     lines.extend(["", f"## Top {top_k} Review Candidates", ""])
     lines.extend(candidate_table(review, top_k))
+    failing_objects = [
+        record for record in summary["object_records"] if record.get("status") == "fail"
+    ]
+    review_needed_objects = [
+        record
+        for record in summary["object_records"]
+        if record.get("status") == "review_needed"
+    ]
+    lines.extend(["", "## Failing Objects", ""])
+    lines.extend(object_table(failing_objects))
+    lines.extend(["", "## Review-needed Objects", ""])
+    lines.extend(object_table(review_needed_objects))
     lines.extend(["", f"## Top {top_k} Rejected Candidates", ""])
     lines.extend(candidate_table(rejected, top_k))
     lines.extend(["", f"## First {top_k} Accepted Candidates", ""])
@@ -509,6 +571,42 @@ def build_markdown(
     return "\n".join(lines) + "\n"
 
 
+def object_table(records: List[Dict[str, Any]]) -> List[str]:
+    lines = [
+        "| status | category | scene | instance | accepted | review | rejected | review candidates |",
+        "|---|---|---|---:|---:|---:|---:|---|",
+    ]
+    if not records:
+        lines.append("| none |  |  |  |  |  |  |  |")
+        return lines
+    for record in sorted(
+        records,
+        key=lambda r: (str(r.get("category")), str(r.get("scene_id")), int(r.get("instance_index") or -1)),
+    ):
+        review_rows = record.get("review_viewpoints") or []
+        review_labels = [
+            f"cand={row.get('candidate_index')} frac={format_float(row.get('image_fraction'))}"
+            for row in review_rows
+        ]
+        lines.append(
+            "| "
+            + " | ".join(
+                [
+                    str(record.get("status")),
+                    str(record.get("category")),
+                    str(record.get("scene_id")),
+                    str(record.get("instance_index")),
+                    str(record.get("accepted_count")),
+                    str(record.get("review_count")),
+                    str(record.get("rejected_count")),
+                    "; ".join(review_labels),
+                ]
+            )
+            + " |"
+        )
+    return lines
+
+
 def main() -> None:
     args = parse_args()
     data = load_json(args.input_json)
@@ -523,6 +621,7 @@ def main() -> None:
     json_path = args.output_dir / "fixed_camera_viewpoint_selection.json"
     candidate_csv = args.output_dir / "fixed_camera_viewpoint_selection_candidates.csv"
     category_csv = args.output_dir / "fixed_camera_viewpoint_selection_categories.csv"
+    object_csv = args.output_dir / "fixed_camera_viewpoint_selection_objects.csv"
     md_path = args.output_dir / "fixed_camera_viewpoint_selection.md"
 
     json_path.write_text(
@@ -539,11 +638,13 @@ def main() -> None:
     )
     write_candidate_csv(candidate_csv, rows)
     write_category_csv(category_csv, summary)
+    write_object_csv(object_csv, summary)
     md_path.write_text(build_markdown(summary, rows, args.top_k), encoding="utf-8")
 
     print(f"Wrote {json_path}")
     print(f"Wrote {candidate_csv}")
     print(f"Wrote {category_csv}")
+    print(f"Wrote {object_csv}")
     print(f"Wrote {md_path}")
     print(
         json.dumps(

@@ -44,4 +44,18 @@ python tools/hssd_viewpoint/select_fixed_camera_viewpoints.py \
 
 The selector is also static. It classifies candidates as `accepted`, `review`, or `rejected`; full-frame, near-full-frame, and tiny masks are rejected by default, while very-large masks require review by default. It writes per-category and per-object feasibility summaries plus prototype `view_points` records for accepted candidates.
 
+For targeted retry runs, the prototype supports exact filters:
+
+```bash
+python tools/hssd_viewpoint/hssd_fixed_camera_viewpoint_prototype.py \
+  --categories cabinet fridge \
+  --scene-ids 102343992 \
+  --instance-indices 27 140 \
+  --max-scenes 0 \
+  --max-objects-per-category 0 \
+  --samples-per-object 32 \
+  --candidate-radii 1.25 1.5 1.75 2.0 2.5 3.0 \
+  --debug-images
+```
+
 Runtime outputs should go under repo-root `outputs/`, which is ignored by git. Do not commit rendered media, debug images, generated viewpoint shards, or logs.

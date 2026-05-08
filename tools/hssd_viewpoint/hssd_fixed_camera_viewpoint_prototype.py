@@ -108,6 +108,24 @@ def parse_args() -> argparse.Namespace:
         help="Maximum target objects per category. Use 0 or negative for no limit.",
     )
     parser.add_argument(
+        "--scene-ids",
+        nargs="*",
+        default=[],
+        help=(
+            "Optional scene_id filter for targeted retries. Accepts "
+            "space-separated values and comma-separated tokens."
+        ),
+    )
+    parser.add_argument(
+        "--instance-indices",
+        nargs="*",
+        default=[],
+        help=(
+            "Optional scene-instance index filter for targeted retries. "
+            "Accepts space-separated values and comma-separated tokens."
+        ),
+    )
+    parser.add_argument(
         "--samples-per-object",
         type=int,
         default=24,
@@ -193,6 +211,29 @@ def parse_categories(values: Sequence[str]) -> List[str]:
             cat = normalize_category(token)
             if cat and cat not in out:
                 out.append(cat)
+    return out
+
+
+def parse_string_list(values: Sequence[str]) -> List[str]:
+    out: List[str] = []
+    for value in values:
+        for token in str(value).split(","):
+            item = token.strip()
+            if item and item not in out:
+                out.append(item)
+    return out
+
+
+def parse_int_list(values: Sequence[str]) -> List[int]:
+    out: List[int] = []
+    for value in values:
+        for token in str(value).split(","):
+            token = token.strip()
+            if not token:
+                continue
+            item = int(token)
+            if item not in out:
+                out.append(item)
     return out
 
 
@@ -386,6 +427,8 @@ def collect_target_objects(
     categories: List[str],
     max_scenes: int,
     max_objects_per_category: int,
+    scene_ids: Optional[Sequence[str]] = None,
+    instance_indices: Optional[Sequence[int]] = None,
 ) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
     object_metadata = load_object_metadata(scene_root)
     scene_paths = sorted((scene_root / scene_dir).glob("*.scene_instance.json"))
@@ -397,11 +440,15 @@ def collect_target_objects(
     scenes_with_targets = 0
 
     category_set = set(categories)
+    scene_id_filter = set(scene_ids or [])
+    instance_index_filter = set(instance_indices or [])
     unlimited_scenes = max_scenes <= 0
     unlimited_objects = max_objects_per_category <= 0
 
     for scene_path in scene_paths:
         scene_id = scene_id_from_path(scene_path)
+        if scene_id_filter and scene_id not in scene_id_filter:
+            continue
         if not unlimited_scenes and scenes_with_targets >= max_scenes:
             break
 
@@ -422,6 +469,8 @@ def collect_target_objects(
         instances = scene_data.get("object_instances") or []
         for idx, instance in enumerate(instances):
             if not isinstance(instance, dict):
+                continue
+            if instance_index_filter and idx not in instance_index_filter:
                 continue
             template_name = str(instance.get("template_name") or "")
             resolved_id, meta, tried = resolve_metadata(template_name, object_metadata)
@@ -474,6 +523,8 @@ def collect_target_objects(
         "scene_count_by_category": {k: len(v) for k, v in scenes_seen_by_category.items()},
         "skipped_by_category_cap": dict(skipped_by_category_cap),
         "metadata_entries": len(object_metadata),
+        "scene_id_filter": sorted(scene_id_filter),
+        "instance_index_filter": sorted(instance_index_filter),
     }
     return selected_objects, summary
 
@@ -1936,6 +1987,10 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
     rng = random.Random(args.seed)
     categories = parse_categories(args.categories)
     args.categories = categories
+    scene_ids = parse_string_list(args.scene_ids)
+    instance_indices = parse_int_list(args.instance_indices)
+    args.scene_ids = scene_ids
+    args.instance_indices = instance_indices
     args.output_dir.mkdir(parents=True, exist_ok=True)
     if args.debug_images:
         (args.output_dir / "debug_images").mkdir(parents=True, exist_ok=True)
@@ -1947,6 +2002,8 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
         categories=categories,
         max_scenes=args.max_scenes,
         max_objects_per_category=args.max_objects_per_category,
+        scene_ids=scene_ids,
+        instance_indices=instance_indices,
     )
 
     result: Dict[str, Any] = {

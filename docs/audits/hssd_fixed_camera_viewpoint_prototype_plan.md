@@ -273,3 +273,21 @@ Default selector policy based on the first manual review:
 - reject `tiny_sentinel_mask`
 - keep `very_large_sentinel_mask` as manual-review, not accepted by default
 - require at least 1,000 visible pixels, 0.005 image fraction, and distance <= 3.0 m for accepted candidates
+
+For targeted retries on specific difficult instances, use `--scene-ids` and `--instance-indices` to avoid rerunning unrelated objects:
+
+```bash
+python tools/hssd_viewpoint/hssd_fixed_camera_viewpoint_prototype.py \
+  --scene-root data/scene_datasets/hssd-hab \
+  --inventory-json docs/audits/hssd_category_expansion_inventory.json \
+  --output-dir outputs/hssd_fixed_camera_viewpoint_retry_cabinet_fridge \
+  --categories cabinet fridge \
+  --scene-ids 102343992 \
+  --instance-indices 27 140 \
+  --max-scenes 0 \
+  --max-objects-per-category 0 \
+  --samples-per-object 32 \
+  --candidate-radii 1.25 1.5 1.75 2.0 2.5 3.0 \
+  --debug-images \
+  --max-debug-images 600
+```
