@@ -167,7 +167,10 @@ def parse_args() -> argparse.Namespace:
         "--max-debug-images",
         type=int,
         default=100,
-        help="Maximum debug image pairs to write when --debug-images is enabled.",
+        help=(
+            "Maximum debug candidates to write when --debug-images is enabled. "
+            "Each saved candidate writes RGB, mask, and overlay images."
+        ),
     )
     return parser.parse_args()
 
@@ -1320,7 +1323,10 @@ def empty_sentinel_visibility(
         "sentinel_semantic_id": sentinel_id,
         "sentinel_visible_pixels": 0,
         "sentinel_image_fraction": 0.0,
+        "sentinel_total_pixels": None,
+        "sentinel_image_shape": None,
         "sentinel_bbox": None,
+        "sentinel_bbox_area_fraction": 0.0,
         "sentinel_mask_bbox_fill_fraction": 0.0,
         "sentinel_mask": None,
     }
@@ -1331,22 +1337,48 @@ def count_sentinel_pixels(semantic_obs: Any, sentinel_id: int) -> Dict[str, Any]
     if arr.ndim == 3:
         arr = arr[:, :, 0]
     h, w = arr.shape[:2]
+    total_pixels = int(h * w)
     mask = arr == int(sentinel_id)
     visible_pixels = int(np.count_nonzero(mask))
     bbox = mask_bbox(mask)
     if bbox is None:
         fill_fraction = 0.0
+        bbox_area_fraction = 0.0
     else:
         fill_fraction = float(visible_pixels / max(1, bbox["area"]))
+        bbox_area_fraction = float(bbox["area"] / max(1, total_pixels))
     return {
         "sentinel_status": "counted",
         "sentinel_semantic_id": int(sentinel_id),
         "sentinel_visible_pixels": visible_pixels,
-        "sentinel_image_fraction": float(visible_pixels / max(1, int(h * w))),
+        "sentinel_image_fraction": float(visible_pixels / max(1, total_pixels)),
+        "sentinel_total_pixels": total_pixels,
+        "sentinel_image_shape": [int(h), int(w)],
         "sentinel_bbox": bbox,
+        "sentinel_bbox_area_fraction": bbox_area_fraction,
         "sentinel_mask_bbox_fill_fraction": fill_fraction,
         "sentinel_mask": mask,
     }
+
+
+def sentinel_mask_quality_flags(visibility: Dict[str, Any]) -> List[str]:
+    flags: List[str] = []
+    visible_pixels = int(visibility.get("sentinel_visible_pixels") or 0)
+    image_fraction = float(visibility.get("sentinel_image_fraction") or 0.0)
+    bbox_area_fraction = float(
+        visibility.get("sentinel_bbox_area_fraction") or 0.0
+    )
+    if visible_pixels <= 0:
+        return flags
+    if image_fraction >= 0.99:
+        flags.append("full_frame_sentinel_mask")
+    elif image_fraction >= 0.50:
+        flags.append("very_large_sentinel_mask")
+    if visible_pixels < 100:
+        flags.append("tiny_sentinel_mask")
+    if bbox_area_fraction >= 0.99:
+        flags.append("near_full_frame_bbox")
+    return flags
 
 
 def safe_filename(value: str, max_len: int = 140) -> str:
@@ -1365,26 +1397,36 @@ def write_debug_images(
     stem = safe_filename(f"{object_uid}_candidate_{candidate_index}")
     rgb_path = debug_dir / f"{stem}_rgb.png"
     mask_path = debug_dir / f"{stem}_mask.png"
+    overlay_path = debug_dir / f"{stem}_overlay.png"
 
     rgb = np.asarray(rgb_obs)
     if rgb.ndim == 3 and rgb.shape[2] == 4:
         rgb = rgb[:, :, :3]
     mask_img = (np.asarray(mask).astype(np.uint8) * 255)
+    overlay = rgb.astype(np.uint8).copy()
+    mask_bool = np.asarray(mask).astype(bool)
+    if overlay.ndim == 3 and overlay.shape[2] >= 3 and mask_bool.shape[:2] == overlay.shape[:2]:
+        red = np.array([255, 0, 0], dtype=np.uint8)
+        overlay[mask_bool, :3] = (
+            0.55 * overlay[mask_bool, :3].astype(np.float32) + 0.45 * red
+        ).astype(np.uint8)
 
     try:
         from PIL import Image  # noqa: PLC0415
 
         Image.fromarray(rgb.astype(np.uint8)).save(rgb_path)
         Image.fromarray(mask_img).save(mask_path)
+        Image.fromarray(overlay).save(overlay_path)
     except Exception:
         try:
             import imageio.v2 as imageio  # noqa: PLC0415
 
             imageio.imwrite(rgb_path, rgb.astype(np.uint8))
             imageio.imwrite(mask_path, mask_img)
+            imageio.imwrite(overlay_path, overlay)
         except Exception as exc:  # noqa: BLE001
             return ["debug_image_write_failed:" + repr(exc)]
-    return [str(rgb_path), str(mask_path)]
+    return [str(rgb_path), str(mask_path), str(overlay_path)]
 
 
 def evaluate_threshold_sweep(candidates: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -1578,6 +1620,9 @@ def process_object_true(
                         sentinel_id,
                         str(sentinel_assignment.get("sentinel_status", "not_assigned")),
                     )
+                sentinel_quality_flags = sentinel_mask_quality_flags(
+                    sentinel_visibility
+                )
                 mask = sentinel_visibility.pop("sentinel_mask", None)
                 sentinel_pixels = int(sentinel_visibility["sentinel_visible_pixels"])
                 sentinel_pixel_counts = (
@@ -1619,6 +1664,7 @@ def process_object_true(
                         "coverage_score": sentinel_visibility[
                             "sentinel_mask_bbox_fill_fraction"
                         ],
+                        "sentinel_mask_quality_flags": sentinel_quality_flags,
                         "semantic_mapping_status": rigid_mapping[
                             "semantic_mapping_status"
                         ],
@@ -1629,8 +1675,17 @@ def process_object_true(
                         "sentinel_semantic_id": sentinel_id,
                         "sentinel_visible_pixels": sentinel_pixels,
                         "sentinel_bbox": sentinel_visibility["sentinel_bbox"],
+                        "sentinel_bbox_area_fraction": sentinel_visibility[
+                            "sentinel_bbox_area_fraction"
+                        ],
                         "sentinel_image_fraction": sentinel_visibility[
                             "sentinel_image_fraction"
+                        ],
+                        "sentinel_total_pixels": sentinel_visibility[
+                            "sentinel_total_pixels"
+                        ],
+                        "sentinel_image_shape": sentinel_visibility[
+                            "sentinel_image_shape"
                         ],
                         "sentinel_status": sentinel_visibility["sentinel_status"],
                         "heuristic_raw_candidate_semantic_ids": heuristic_visibility[
@@ -1848,6 +1903,7 @@ def finalize_result(result: Dict[str, Any]) -> Dict[str, Any]:
     candidate_error_count = 0
     semantic_mapping_status_counts: Counter[str] = Counter()
     sentinel_status_counts: Counter[str] = Counter()
+    sentinel_mask_quality_flag_counts: Counter[str] = Counter()
 
     for obj_result in result["object_results"]:
         obj = obj_result.get("object") or {}
@@ -1869,6 +1925,9 @@ def finalize_result(result: Dict[str, Any]) -> Dict[str, Any]:
         heuristic_candidates_with_visible_pixels += len(
             [c for c in candidates if (c.get("heuristic_visible_pixels") or 0) > 0]
         )
+        for candidate in candidates:
+            for flag in candidate.get("sentinel_mask_quality_flags") or []:
+                sentinel_mask_quality_flag_counts[str(flag)] += 1
         candidate_error_count += len([c for c in candidates if c.get("candidate_error")])
 
     result["summary"] = {
@@ -1885,6 +1944,9 @@ def finalize_result(result: Dict[str, Any]) -> Dict[str, Any]:
         ),
         "semantic_mapping_status_counts": dict(semantic_mapping_status_counts),
         "sentinel_status_counts": dict(sentinel_status_counts),
+        "sentinel_mask_quality_flag_counts": dict(
+            sentinel_mask_quality_flag_counts
+        ),
     }
     return result
 
@@ -1949,6 +2011,7 @@ def build_markdown(result: Dict[str, Any]) -> str:
             f"- objects with any visible pixels: {summary['objects_with_any_visible_pixels']}",
             f"- semantic mapping statuses: {summary.get('semantic_mapping_status_counts', {})}",
             f"- sentinel statuses: {summary.get('sentinel_status_counts', {})}",
+            f"- sentinel mask quality flags: {summary.get('sentinel_mask_quality_flag_counts', {})}",
             "",
             "## JSON Structure",
             "",
@@ -1962,6 +2025,8 @@ def build_markdown(result: Dict[str, Any]) -> str:
             "## Semantic Diagnostics",
             "",
             "Non-dry-run object results include `semantic_scene_diagnostics`, `semantic_mapping`, and `candidate_semantic_id_diagnostics`. Candidate results include sentinel-driven `visible_pixels` plus diagnostic `heuristic_*` fields when rendering reaches the sensor observation step.",
+            "",
+            "When `--debug-images` is enabled, each saved candidate now writes RGB, binary sentinel mask, and RGB+mask overlay images. `sentinel_mask_quality_flags` marks diagnostic cases such as full-frame, very-large, or tiny target masks; these flags do not reject candidates by themselves.",
             "",
             "## Threshold Sweep",
             "",

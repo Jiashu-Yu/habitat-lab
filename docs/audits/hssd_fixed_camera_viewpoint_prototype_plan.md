@@ -164,7 +164,7 @@ The script writes:
 - `output-dir/hssd_fixed_camera_viewpoint_prototype.md`
 - `output-dir/debug_images/` when `--debug-images` is enabled
 
-Debug images are always placed below the selected output directory, never in the repo root.
+Debug images are always placed below the selected output directory, never in the repo root. Each saved candidate writes an RGB image, a binary sentinel mask, and an RGB+mask overlay image.
 
 ## JSON Structure
 
@@ -199,7 +199,11 @@ Each rendered candidate result may include:
 - `sentinel_semantic_id`
 - `sentinel_visible_pixels`
 - `sentinel_bbox`
+- `sentinel_bbox_area_fraction`
 - `sentinel_image_fraction`
+- `sentinel_total_pixels`
+- `sentinel_image_shape`
+- `sentinel_mask_quality_flags`
 - `heuristic_raw_candidate_semantic_ids`
 - `heuristic_candidate_semantic_ids`
 - `heuristic_best_semantic_id`
@@ -207,6 +211,8 @@ Each rendered candidate result may include:
 - `pixel_counts_by_semantic_id`
 - `best_semantic_id`
 - `visible_pixels` / `visible_pixel_count`
+
+`sentinel_mask_quality_flags` marks review cases such as `full_frame_sentinel_mask`, `near_full_frame_bbox`, `very_large_sentinel_mask`, and `tiny_sentinel_mask`. These flags are diagnostics for camera/object geometry and threshold tuning; they do not automatically reject candidates.
 
 ## Current Limitations
 
@@ -226,7 +232,7 @@ For a small server run:
 
 - no scene-level crashes, or failures isolated in `failed_scenes`
 - target categories resolve to expected HSSD objects
-- debug RGB/mask pairs show the intended object
+- debug RGB/mask/overlay triplets show the intended object
 - several categories achieve at least 3 fixed-camera visible viewpoints per object under reasonable thresholds
 - categories with poor fixed-camera visibility are identified before dataset regeneration
 
@@ -234,7 +240,7 @@ For a small server run:
 
 1. Run dry mode locally to confirm category/object selection.
 2. Run small mode on the server with `--debug-images`.
-3. Manually inspect debug RGB/mask pairs for each category.
+3. Manually inspect debug RGB/mask/overlay triplets for each category.
 4. Confirm sentinel-based positives match debug RGB/mask images on the server.
 5. Audit unresolved or ambiguous rigid-object mappings across the selected categories.
 6. Tune thresholds for fixed-camera visibility.
