@@ -87,6 +87,9 @@ def flatten_row(
     overlay_images = [
         p for p in debug_images if "_overlay" in str(p) or str(p).endswith("overlay.png")
     ]
+    review_images = [
+        p for p in debug_images if "_review" in str(p) or str(p).endswith("review.png")
+    ]
     flags = [str(f) for f in (candidate.get("sentinel_mask_quality_flags") or [])]
     visible_pixels = int(
         candidate.get("visible_pixels", candidate.get("visible_pixel_count", 0)) or 0
@@ -118,6 +121,7 @@ def flatten_row(
         "candidate_error": candidate.get("candidate_error"),
         "debug_images": debug_images,
         "overlay_images": overlay_images,
+        "review_images": review_images,
     }
 
 
@@ -145,6 +149,7 @@ def summarize(data: Dict[str, Any], rows: List[Dict[str, Any]]) -> Dict[str, Any
 
     debug_image_count = sum(len(row["debug_images"]) for row in rows)
     overlay_image_count = sum(len(row["overlay_images"]) for row in rows)
+    review_image_count = sum(len(row["review_images"]) for row in rows)
     positive_rows = [row for row in rows if row["visible_pixels"] > 0]
     heuristic_positive_rows = [
         row for row in rows if row["heuristic_visible_pixels"] > 0
@@ -170,6 +175,7 @@ def summarize(data: Dict[str, Any], rows: List[Dict[str, Any]]) -> Dict[str, Any
         "full_frame_sentinel_candidates": len(full_frame_rows),
         "debug_image_paths_in_json": debug_image_count,
         "overlay_image_paths_in_json": overlay_image_count,
+        "review_image_paths_in_json": review_image_count,
         "flag_counts": dict(flag_counter),
         "mapping_status_counts_from_candidates": dict(mapping_counter),
         "sentinel_status_counts_from_candidates": dict(sentinel_status_counter),
@@ -194,6 +200,7 @@ def write_csv(path: Path, rows: List[Dict[str, Any]]) -> None:
         "semantic_mapping_status",
         "sentinel_status",
         "rigid_object_handle",
+        "review_images",
         "overlay_images",
         "debug_images",
     ]
@@ -221,11 +228,12 @@ def row_label(row: Dict[str, Any]) -> str:
 
 def markdown_table(rows: List[Dict[str, Any]], limit: int) -> List[str]:
     lines = [
-        "| candidate | visible | image frac | bbox frac | flags | heuristic | overlay |",
+        "| candidate | visible | image frac | bbox frac | flags | heuristic | review/overlay |",
         "|---|---:|---:|---:|---|---:|---|",
     ]
     for row in rows[:limit]:
-        overlay = "; ".join(str(p) for p in row.get("overlay_images") or [])
+        review = "; ".join(str(p) for p in row.get("review_images") or [])
+        overlay = review or "; ".join(str(p) for p in row.get("overlay_images") or [])
         lines.append(
             "| "
             + " | ".join(

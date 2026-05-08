@@ -21,7 +21,7 @@ Non-dry-run results also include semantic diagnostics. Each object can include `
 
 Final target-mask construction uses an instance-level sentinel semantic ID assigned to the matched HSSD rigid object. The older non-zero heuristic semantic IDs are retained only as diagnostics under `heuristic_*` fields. Semantic ID `0` remains filtered from heuristic diagnostics because HSSD semantic frames can use it for background/void/unlabeled pixels.
 
-When `--debug-images` is enabled, each saved candidate writes three images: RGB, binary sentinel mask, and RGB+mask overlay. Large/full-frame mask flags are diagnostics for camera/object geometry and candidate quality; they do not automatically reject a candidate.
+When `--debug-images` is enabled, each saved candidate writes four images: RGB, binary sentinel mask, RGB+mask overlay, and an annotated review image. The review image includes target category, scene, instance, candidate, rigid handle, visible pixel count, quality flags, and brightened RGB/overlay panels for dark HSSD assets. Large/full-frame mask flags are diagnostics for camera/object geometry and candidate quality; they do not automatically reject a candidate.
 
 Use `analyze_fixed_camera_viewpoint_output.py` to summarize a completed JSON run without importing Habitat:
 
@@ -31,6 +31,6 @@ python tools/hssd_viewpoint/analyze_fixed_camera_viewpoint_output.py \
   --output-dir outputs/hssd_fixed_camera_viewpoint_analysis
 ```
 
-The analyzer understands the current schema, `object_results[*].object` plus `object_results[*].candidate_results`, and writes JSON/CSV/Markdown tables for sentinel-positive, heuristic-only, and quality-flagged candidates.
+The analyzer understands the current schema, `object_results[*].object` plus `object_results[*].candidate_results`, and writes JSON/CSV/Markdown tables for sentinel-positive, heuristic-only, and quality-flagged candidates. When review images are available, the Markdown tables link to review images first and overlay images second.
 
 Runtime outputs should go under repo-root `outputs/`, which is ignored by git. Do not commit rendered media, debug images, generated viewpoint shards, or logs.

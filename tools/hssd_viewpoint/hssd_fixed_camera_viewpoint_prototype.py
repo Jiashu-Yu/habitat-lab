@@ -122,8 +122,8 @@ def parse_args() -> argparse.Namespace:
         "--debug-images",
         action="store_true",
         help=(
-            "In non-dry-run mode, save RGB, target-mask, and overlay debug "
-            "PNGs under output-dir/debug_images."
+            "In non-dry-run mode, save RGB, target-mask, overlay, and "
+            "annotated review debug PNGs under output-dir/debug_images."
         ),
     )
     parser.add_argument("--seed", type=int, default=13, help="Random seed.")
@@ -172,7 +172,7 @@ def parse_args() -> argparse.Namespace:
         default=100,
         help=(
             "Maximum debug candidates to write when --debug-images is enabled. "
-            "Each saved candidate writes RGB, mask, and overlay images."
+            "Each saved candidate writes RGB, mask, overlay, and review images."
         ),
     )
     return parser.parse_args()
@@ -1389,30 +1389,151 @@ def safe_filename(value: str, max_len: int = 140) -> str:
     return text[:max_len].strip("_") or "item"
 
 
+def rgb_to_uint8(rgb_obs: Any) -> np.ndarray:
+    rgb = np.asarray(rgb_obs)
+    if rgb.ndim == 3 and rgb.shape[2] == 4:
+        rgb = rgb[:, :, :3]
+    if rgb.dtype != np.uint8:
+        rgb = rgb.astype(np.float32)
+        if rgb.size and float(np.nanmax(rgb)) <= 1.0:
+            rgb = rgb * 255.0
+        rgb = np.clip(rgb, 0, 255).astype(np.uint8)
+    return rgb
+
+
+def brighten_rgb_for_review(rgb: np.ndarray) -> np.ndarray:
+    """Create a brighter review copy without changing metric computation."""
+    arr = rgb.astype(np.float32)
+    if arr.size == 0:
+        return rgb
+    low, high = np.percentile(arr, [1.0, 99.5])
+    if not np.isfinite(low) or not np.isfinite(high) or high <= low + 1.0:
+        stretched = arr
+    else:
+        stretched = (arr - low) * (255.0 / (high - low))
+    stretched = np.clip(stretched, 0, 255)
+    # Gamma < 1 brightens dark rendered assets for human review.
+    bright = np.power(stretched / 255.0, 0.65) * 255.0
+    return np.clip(bright, 0, 255).astype(np.uint8)
+
+
+def mask_boundary(mask: np.ndarray) -> np.ndarray:
+    if mask.size == 0:
+        return mask
+    mask_bool = mask.astype(bool)
+    padded = np.pad(mask_bool, 1, mode="constant", constant_values=False)
+    inner = (
+        padded[1:-1, 1:-1]
+        & padded[:-2, 1:-1]
+        & padded[2:, 1:-1]
+        & padded[1:-1, :-2]
+        & padded[1:-1, 2:]
+    )
+    return mask_bool & ~inner
+
+
+def make_overlay(rgb: np.ndarray, mask: np.ndarray, alpha: float = 0.35) -> np.ndarray:
+    overlay = rgb.astype(np.uint8).copy()
+    mask_bool = np.asarray(mask).astype(bool)
+    if overlay.ndim == 3 and overlay.shape[2] >= 3 and mask_bool.shape[:2] == overlay.shape[:2]:
+        red = np.array([255, 0, 0], dtype=np.uint8)
+        overlay[mask_bool, :3] = (
+            (1.0 - alpha) * overlay[mask_bool, :3].astype(np.float32)
+            + alpha * red
+        ).astype(np.uint8)
+        boundary = mask_boundary(mask_bool)
+        overlay[boundary, :3] = np.array([255, 230, 0], dtype=np.uint8)
+    return overlay
+
+
+def truncate_text(value: Any, max_len: int = 96) -> str:
+    text = "" if value is None else str(value)
+    return text if len(text) <= max_len else text[: max_len - 3] + "..."
+
+
+def make_review_image(
+    rgb: np.ndarray,
+    bright_rgb: np.ndarray,
+    bright_overlay: np.ndarray,
+    mask_img: np.ndarray,
+    metadata: Optional[Dict[str, Any]],
+) -> Optional["Image.Image"]:
+    try:
+        from PIL import Image, ImageDraw  # noqa: PLC0415
+    except Exception:
+        return None
+
+    metadata = metadata or {}
+    h, w = bright_rgb.shape[:2]
+    header_h = 132
+    canvas = Image.new("RGB", (w * 3, h + header_h), color=(245, 245, 245))
+    draw = ImageDraw.Draw(canvas)
+
+    lines = [
+        (
+            f"target={metadata.get('category')} "
+            f"name={truncate_text(metadata.get('object_name'), 42)} "
+            f"scene={metadata.get('scene_id')} "
+            f"instance={metadata.get('instance_index')} "
+            f"candidate={metadata.get('candidate_index')}"
+        ),
+        (
+            f"visible={metadata.get('visible_pixels')} "
+            f"frac={metadata.get('image_fraction')} "
+            f"flags={metadata.get('quality_flags')}"
+        ),
+        (
+            f"distance={metadata.get('distance_to_object')} "
+            f"bbox={metadata.get('sentinel_bbox')} "
+            f"sentinel={metadata.get('sentinel_semantic_id')}"
+        ),
+        f"handle={truncate_text(metadata.get('rigid_object_handle'))}",
+        f"template={truncate_text(metadata.get('template_name'))}",
+    ]
+    y = 8
+    for line in lines:
+        draw.text((10, y), line, fill=(0, 0, 0))
+        y += 22
+
+    draw.text((10, header_h - 20), "bright RGB", fill=(0, 0, 0))
+    draw.text((w + 10, header_h - 20), "bright RGB + sentinel mask", fill=(0, 0, 0))
+    draw.text((w * 2 + 10, header_h - 20), "binary sentinel mask", fill=(0, 0, 0))
+
+    mask_rgb = np.stack([mask_img, mask_img, mask_img], axis=-1)
+    canvas.paste(Image.fromarray(bright_rgb), (0, header_h))
+    canvas.paste(Image.fromarray(bright_overlay), (w, header_h))
+    canvas.paste(Image.fromarray(mask_rgb.astype(np.uint8)), (w * 2, header_h))
+    return canvas
+
+
 def write_debug_images(
     debug_dir: Path,
     object_uid: str,
     candidate_index: int,
     rgb_obs: Any,
     mask: Any,
+    metadata: Optional[Dict[str, Any]] = None,
 ) -> List[str]:
     debug_dir.mkdir(parents=True, exist_ok=True)
     stem = safe_filename(f"{object_uid}_candidate_{candidate_index}")
     rgb_path = debug_dir / f"{stem}_rgb.png"
     mask_path = debug_dir / f"{stem}_mask.png"
     overlay_path = debug_dir / f"{stem}_overlay.png"
+    review_path = debug_dir / f"{stem}_review.png"
 
-    rgb = np.asarray(rgb_obs)
-    if rgb.ndim == 3 and rgb.shape[2] == 4:
-        rgb = rgb[:, :, :3]
+    rgb = rgb_to_uint8(rgb_obs)
     mask_img = (np.asarray(mask).astype(np.uint8) * 255)
-    overlay = rgb.astype(np.uint8).copy()
     mask_bool = np.asarray(mask).astype(bool)
-    if overlay.ndim == 3 and overlay.shape[2] >= 3 and mask_bool.shape[:2] == overlay.shape[:2]:
-        red = np.array([255, 0, 0], dtype=np.uint8)
-        overlay[mask_bool, :3] = (
-            0.55 * overlay[mask_bool, :3].astype(np.float32) + 0.45 * red
-        ).astype(np.uint8)
+    overlay = make_overlay(rgb, mask_bool, alpha=0.45)
+    bright_rgb = brighten_rgb_for_review(rgb)
+    bright_overlay = make_overlay(bright_rgb, mask_bool, alpha=0.35)
+    review = make_review_image(
+        rgb=rgb,
+        bright_rgb=bright_rgb,
+        bright_overlay=bright_overlay,
+        mask_img=mask_img,
+        metadata=metadata,
+    )
 
     try:
         from PIL import Image  # noqa: PLC0415
@@ -1420,6 +1541,8 @@ def write_debug_images(
         Image.fromarray(rgb.astype(np.uint8)).save(rgb_path)
         Image.fromarray(mask_img).save(mask_path)
         Image.fromarray(overlay).save(overlay_path)
+        if review is not None:
+            review.save(review_path)
     except Exception:
         try:
             import imageio.v2 as imageio  # noqa: PLC0415
@@ -1429,7 +1552,10 @@ def write_debug_images(
             imageio.imwrite(overlay_path, overlay)
         except Exception as exc:  # noqa: BLE001
             return ["debug_image_write_failed:" + repr(exc)]
-    return [str(rgb_path), str(mask_path), str(overlay_path)]
+    paths = [str(rgb_path), str(mask_path), str(overlay_path)]
+    if review is not None and review_path.exists():
+        paths.append(str(review_path))
+    return paths
 
 
 def evaluate_threshold_sweep(candidates: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -1725,12 +1851,28 @@ def process_object_true(
 
                 if args.debug_images and rgb_obs is not None and mask is not None:
                     if debug_state["written"] < args.max_debug_images:
+                        debug_metadata = {
+                            "category": obj.get("category"),
+                            "scene_id": obj.get("scene_id"),
+                            "instance_index": obj.get("instance_index"),
+                            "candidate_index": result.get("candidate_index"),
+                            "object_name": obj.get("object_name"),
+                            "template_name": obj.get("template_name"),
+                            "rigid_object_handle": resolved_rigid_handle,
+                            "sentinel_semantic_id": sentinel_id,
+                            "visible_pixels": sentinel_pixels,
+                            "image_fraction": f"{float(result.get('image_fraction') or 0.0):.4f}",
+                            "distance_to_object": f"{float(distance):.3f}",
+                            "sentinel_bbox": result.get("sentinel_bbox"),
+                            "quality_flags": sentinel_quality_flags,
+                        }
                         paths = write_debug_images(
                             args.output_dir / "debug_images",
                             obj["object_uid"],
                             int(plan["candidate_index"]),
                             rgb_obs,
                             mask,
+                            metadata=debug_metadata,
                         )
                         result["debug_images"] = paths
                         debug_state["written"] += 1
@@ -2029,7 +2171,7 @@ def build_markdown(result: Dict[str, Any]) -> str:
             "",
             "Non-dry-run object results include `semantic_scene_diagnostics`, `semantic_mapping`, and `candidate_semantic_id_diagnostics`. Candidate results include sentinel-driven `visible_pixels` plus diagnostic `heuristic_*` fields when rendering reaches the sensor observation step.",
             "",
-            "When `--debug-images` is enabled, each saved candidate now writes RGB, binary sentinel mask, and RGB+mask overlay images. `sentinel_mask_quality_flags` marks diagnostic cases such as full-frame, very-large, or tiny target masks; these flags do not reject candidates by themselves.",
+            "When `--debug-images` is enabled, each saved candidate now writes RGB, binary sentinel mask, RGB+mask overlay, and an annotated review image with target metadata and brightened panels. `sentinel_mask_quality_flags` marks diagnostic cases such as full-frame, very-large, or tiny target masks; these flags do not reject candidates by themselves.",
             "",
             "## Threshold Sweep",
             "",

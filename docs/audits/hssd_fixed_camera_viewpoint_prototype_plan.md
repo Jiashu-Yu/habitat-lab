@@ -165,7 +165,7 @@ The script writes:
 - `output-dir/hssd_fixed_camera_viewpoint_prototype.md`
 - `output-dir/debug_images/` when `--debug-images` is enabled
 
-Debug images are always placed below the selected output directory, never in the repo root. Each saved candidate writes an RGB image, a binary sentinel mask, and an RGB+mask overlay image.
+Debug images are always placed below the selected output directory, never in the repo root. Each saved candidate writes an RGB image, a binary sentinel mask, an RGB+mask overlay image, and an annotated review image. The review image includes target metadata plus brightened RGB/overlay panels for dark HSSD assets.
 
 ## JSON Structure
 
@@ -233,7 +233,7 @@ For a small server run:
 
 - no scene-level crashes, or failures isolated in `failed_scenes`
 - target categories resolve to expected HSSD objects
-- debug RGB/mask/overlay triplets show the intended object
+- debug RGB/mask/overlay/review images show the intended object
 - several categories achieve at least 3 fixed-camera visible viewpoints per object under reasonable thresholds
 - categories with poor fixed-camera visibility are identified before dataset regeneration
 
@@ -241,7 +241,7 @@ For a small server run:
 
 1. Run dry mode locally to confirm category/object selection.
 2. Run small mode on the server with `--debug-images`.
-3. Manually inspect debug RGB/mask/overlay triplets for each category.
+3. Manually inspect debug review images for flagged cases and spot-check RGB/mask/overlay images for each category.
 4. Confirm sentinel-based positives match debug RGB/mask images on the server.
 5. Audit unresolved or ambiguous rigid-object mappings across the selected categories.
 6. Tune thresholds for fixed-camera visibility.
