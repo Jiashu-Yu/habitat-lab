@@ -124,19 +124,18 @@ For each selected target object:
 
 1. Resolve the object category from HSSD metadata.
 2. Use the scene instance translation and metadata dimensions as a static object-center approximation.
-3. In non-dry-run mode, initialize Habitat-Sim for the scene.
-4. Match the static object record to a semantic-scene object by nearest semantic AABB center, with a category-name bonus when available.
-   If `sim.semantic_scene.objects` is empty, continue anyway and rely on candidate semantic-id diagnostics instead of dropping the object.
-5. Sample candidate positions around the object at multiple radii.
-6. Snap candidate positions to the navmesh.
-7. Set agent yaw to face the target center.
+3. In non-dry-run mode, initialize Habitat-Sim for the scene with `enable_physics=True` so HSSD rigid objects are available.
+4. Resolve the target scene-instance object to a runtime rigid object handle using `template_name`; when multiple handles match the same template, select the nearest runtime center/translation to the static target center.
+5. Temporarily assign a high sentinel semantic ID to the selected rigid object and restore the original semantic ID after processing the object.
+6. Match the static object record to a semantic-scene object by nearest semantic AABB center, with a category-name bonus when available, only for heuristic diagnostics.
+7. Sample candidate positions around the object at multiple radii.
+8. Snap candidate positions to the navmesh.
+9. Set agent yaw to face the target center.
    The yaw quaternion is force-normalized before assigning `AgentState.rotation`; invalid or near-zero quaternions fall back to identity.
-8. Keep camera pitch fixed.
-9. Render RGB and semantic observations.
-10. Count target semantic pixels.
-    Candidate target semantic IDs include semantic-scene object IDs when available, `scene_instance.json` `instance_index`, `instance_index + 1`, and bounded standalone integer tokens parsed from object handles/UIDs.
-    Semantic ID `0` is filtered out before target-mask construction because HSSD semantic frames can use it for background/void/unlabeled pixels; removed IDs are preserved in diagnostics.
-11. Compute:
+10. Keep camera pitch fixed.
+11. Render RGB and semantic observations.
+12. Count target semantic pixels using only the sentinel semantic ID. Heuristic semantic IDs are retained under `heuristic_*` fields but do not drive final `visible_pixels` or threshold sweep.
+13. Compute:
     - semantic observation diagnostics: dtype, min, max, unique sample, and shape
     - visible pixel count
     - image fraction
@@ -182,6 +181,11 @@ Each non-dry-run object result may include:
 
 - `semantic_scene_diagnostics`
 - `semantic_match`
+- `semantic_mapping`
+- `semantic_mapping_status`
+- `sentinel_status`
+- `original_rigid_semantic_id`
+- `sentinel_semantic_id`
 - `semantic_ids_checked`
 - `candidate_semantic_id_diagnostics`, including raw IDs, filtered IDs, source labels, removed invalid IDs, and heuristic IDs
 - `threshold_sweep`
@@ -190,9 +194,16 @@ Each rendered candidate result may include:
 
 - `rotation_diagnostics`, including `rotation_norm_before`, `rotation_norm_after`, and whether normalization/fallback occurred
 - `semantic_observation_diagnostics`, including `semantic_sensor_dtype`, `semantic_min`, `semantic_max`, `semantic_unique_sample`, and `semantic_unique_count`
-- `raw_candidate_semantic_ids`
-- `candidate_semantic_ids`
-- `invalid_candidate_semantic_ids_removed`
+- `semantic_mapping_status`
+- `rigid_object_handle`
+- `sentinel_semantic_id`
+- `sentinel_visible_pixels`
+- `sentinel_bbox`
+- `sentinel_image_fraction`
+- `heuristic_raw_candidate_semantic_ids`
+- `heuristic_candidate_semantic_ids`
+- `heuristic_best_semantic_id`
+- `heuristic_visible_pixels`
 - `pixel_counts_by_semantic_id`
 - `best_semantic_id`
 - `visible_pixels` / `visible_pixel_count`
@@ -200,9 +211,9 @@ Each rendered candidate result may include:
 ## Current Limitations
 
 - Dry-run mode does not prove navigability or visibility.
-- Semantic object matching is a prototype nearest-AABB-center heuristic.
-- If `sim.semantic_scene.objects` is empty, the prototype cannot perform AABB matching, but it still records semantic observation diagnostics for rendered candidates.
-- Candidate semantic ID fallbacks can include IDs that are not the target. ID `0` is now excluded from target masks, but non-zero heuristic IDs can still refer to neighboring objects until rigid-object/sentinel mapping is implemented. Debug images and manual checks remain required before trusting pass/fail visibility thresholds.
+- Rigid-object handle matching is still a prototype resolver. It has been smoke-tested on representative cases, but broad-scene ambiguity checks are still needed.
+- Semantic object matching is kept only as a heuristic diagnostic. If `sim.semantic_scene.objects` is empty, the prototype can still use HSSD rigid object sentinel masks.
+- Candidate semantic ID fallbacks can include IDs that are not the target. ID `0` is excluded from heuristic diagnostics, and non-zero heuristic IDs do not drive final `visible_pixels`.
 - `iou` is left as `null` because the prototype does not yet compute a projected full-object reference mask.
 - `coverage_score` currently means target-mask fill inside the observed target-mask bounding box.
 - Object center from static metadata is approximate and ignores object rotation.
@@ -224,8 +235,8 @@ For a small server run:
 1. Run dry mode locally to confirm category/object selection.
 2. Run small mode on the server with `--debug-images`.
 3. Manually inspect debug RGB/mask pairs for each category.
-4. Confirm `best_semantic_id == 0` is zero after Phase 1 filtering.
-5. Add rigid-object/sentinel semantic ID mapping for HSSD instance-level masks.
+4. Confirm sentinel-based positives match debug RGB/mask images on the server.
+5. Audit unresolved or ambiguous rigid-object mappings across the selected categories.
 6. Tune thresholds for fixed-camera visibility.
-7. Add a stronger semantic-object matching method if nearest AABB is unreliable.
+7. Add a stronger rigid-object matching method if template+nearest-center is unreliable.
 8. Add final writer for ObjectNav-compatible `view_points` only after the visibility audit is trusted.

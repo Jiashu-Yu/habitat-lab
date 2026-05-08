@@ -44,6 +44,9 @@ MIN_IMAGE_FRACTION = [0.001, 0.003, 0.005, 0.01]
 MAX_DISTANCE = [1.0, 1.5, 2.0, 3.0]
 MIN_VIEWPOINTS_PER_OBJECT = [1, 3, 5]
 INVALID_TARGET_SEMANTIC_IDS = {0}
+SENTINEL_SEMANTIC_ID = 90000
+CLEAR_NEAREST_RIGID_MATCH_MARGIN_METERS = 0.25
+MAX_UNIQUE_RIGID_MATCH_DISTANCE_METERS = 0.75
 SEMANTIC_ID_FILTER_NOTE = (
     "Semantic id 0 is excluded from target matching because observed HSSD "
     "semantic frames can use it for background/void/unlabeled pixels. "
@@ -533,7 +536,9 @@ def build_simulator(args: argparse.Namespace, scene_path: Path):
     sim_cfg = habitat_sim.SimulatorConfiguration()
     sim_cfg.scene_dataset_config_file = str(args.scene_dataset_config)
     sim_cfg.scene_id = str(scene_path)
-    sim_cfg.enable_physics = False
+    # HSSD semantic targets are runtime rigid objects.  Physics must be enabled
+    # so sim.get_rigid_object_manager() can resolve handles for sentinel masks.
+    sim_cfg.enable_physics = True
     sim_cfg.gpu_device_id = int(args.gpu_device_id)
 
     rgb_spec = habitat_sim.CameraSensorSpec()
@@ -1040,6 +1045,310 @@ def count_target_pixels(semantic_obs: Any, semantic_ids: List[int]) -> Dict[str,
     }
 
 
+def value_or_call(value: Any) -> Any:
+    if callable(value):
+        try:
+            return value()
+        except TypeError:
+            return value
+    return value
+
+
+def vector_to_list(value: Any) -> Optional[List[float]]:
+    if value is None:
+        return None
+    if hasattr(value, "x") and hasattr(value, "y") and hasattr(value, "z"):
+        parts = [value.x, value.y, value.z]
+    else:
+        try:
+            parts = list(value)
+        except TypeError:
+            return None
+    if len(parts) < 3:
+        return None
+    out: List[float] = []
+    for part in parts[:3]:
+        try:
+            val = float(part)
+        except (TypeError, ValueError):
+            return None
+        if not math.isfinite(val):
+            return None
+        out.append(val)
+    return out
+
+
+def rigid_translation(rigid_obj: Any) -> Optional[List[float]]:
+    for attr in ["translation", "position"]:
+        if hasattr(rigid_obj, attr):
+            parsed = vector_to_list(value_or_call(getattr(rigid_obj, attr)))
+            if parsed is not None:
+                return parsed
+    node = getattr(rigid_obj, "root_scene_node", None)
+    if node is not None and hasattr(node, "translation"):
+        return vector_to_list(value_or_call(getattr(node, "translation")))
+    return None
+
+
+def rigid_aabb_center(rigid_obj: Any) -> Optional[List[float]]:
+    bbox_sources = []
+    for attr in ["aabb", "collision_shape_aabb"]:
+        if hasattr(rigid_obj, attr):
+            bbox_sources.append(value_or_call(getattr(rigid_obj, attr)))
+    node = getattr(rigid_obj, "root_scene_node", None)
+    if node is not None:
+        for attr in ["cumulative_bb", "aabb"]:
+            if hasattr(node, attr):
+                bbox_sources.append(value_or_call(getattr(node, attr)))
+
+    for bbox in bbox_sources:
+        if bbox is None:
+            continue
+        center = vector_to_list(value_or_call(getattr(bbox, "center", None)))
+        if center is not None:
+            return center
+        for min_attr, max_attr in [("min", "max"), ("min_point", "max_point")]:
+            if hasattr(bbox, min_attr) and hasattr(bbox, max_attr):
+                min_val = vector_to_list(value_or_call(getattr(bbox, min_attr)))
+                max_val = vector_to_list(value_or_call(getattr(bbox, max_attr)))
+                if min_val is not None and max_val is not None:
+                    return [(min_val[i] + max_val[i]) * 0.5 for i in range(3)]
+    return None
+
+
+def distance3(a: Optional[Iterable[float]], b: Optional[Iterable[float]]) -> Optional[float]:
+    if a is None or b is None:
+        return None
+    aa = list(a)
+    bb = list(b)
+    if len(aa) < 3 or len(bb) < 3:
+        return None
+    return math.sqrt(sum((float(aa[i]) - float(bb[i])) ** 2 for i in range(3)))
+
+
+def serializable_scalar(value: Any) -> Any:
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return str(value)
+
+
+def rigid_candidate_record(
+    handle: str,
+    rigid_obj: Any,
+    target_center: Optional[List[float]],
+    target_translation: Optional[List[float]],
+) -> Dict[str, Any]:
+    translation = rigid_translation(rigid_obj)
+    aabb_center = rigid_aabb_center(rigid_obj)
+    distance_aabb = distance3(aabb_center, target_center)
+    distance_translation_center = distance3(translation, target_center)
+    distance_translation_origin = distance3(translation, target_translation)
+    distance_values = [
+        value
+        for value in [distance_aabb, distance_translation_origin, distance_translation_center]
+        if value is not None
+    ]
+    return {
+        "handle": handle,
+        "semantic_id": serializable_scalar(getattr(rigid_obj, "semantic_id", None)),
+        "object_id": serializable_scalar(getattr(rigid_obj, "object_id", None)),
+        "translation": translation,
+        "aabb_center": aabb_center,
+        "distance_aabb_to_static_center": distance_aabb,
+        "distance_translation_to_scene_translation": distance_translation_origin,
+        "distance_translation_to_static_center": distance_translation_center,
+        "distance_for_sort": min(distance_values) if distance_values else None,
+    }
+
+
+def sort_rigid_candidates(candidates: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    return sorted(
+        candidates,
+        key=lambda item: (
+            item.get("distance_for_sort") is None,
+            item.get("distance_for_sort")
+            if item.get("distance_for_sort") is not None
+            else float("inf"),
+            item.get("handle", ""),
+        ),
+    )
+
+
+def resolve_target_rigid_object(sim: Any, obj: Dict[str, Any]) -> Dict[str, Any]:
+    template_name = obj.get("template_name") or ""
+    target_center = obj.get("object_center_static_approx")
+    target_translation = obj.get("translation")
+    notes: List[str] = []
+    warnings: List[str] = []
+
+    try:
+        rom = sim.get_rigid_object_manager()
+        handles = list(rom.get_object_handles())
+    except Exception as exc:  # noqa: BLE001
+        return {
+            "semantic_mapping_status": "unresolved_rigid_object_manager_error",
+            "rigid_object_handle_count": 0,
+            "matched_candidate_count": 0,
+            "matched_candidates": [],
+            "selected_candidate": None,
+            "selected_rigid_object": None,
+            "notes": notes,
+            "warnings": [repr(exc)],
+        }
+
+    matched: List[Dict[str, Any]] = []
+    selected_rigid_object = None
+    rigid_objects_by_handle: Dict[str, Any] = {}
+    for handle in handles:
+        if template_name and template_name in handle:
+            rigid_obj = rom.get_object_by_handle(handle)
+            if rigid_obj is None:
+                continue
+            rigid_objects_by_handle[handle] = rigid_obj
+            matched.append(
+                rigid_candidate_record(
+                    handle, rigid_obj, target_center, target_translation
+                )
+            )
+
+    matched = sort_rigid_candidates(matched)
+    selected = matched[0] if matched else None
+    if selected is not None:
+        selected_rigid_object = rigid_objects_by_handle.get(selected["handle"])
+
+    if not matched:
+        status = "unresolved_no_template_handle_match"
+    elif len(matched) == 1:
+        status = "resolved_unique_template"
+        dist = selected.get("distance_for_sort")
+        if dist is None:
+            warnings.append("unique template match has no usable runtime center")
+        elif dist > MAX_UNIQUE_RIGID_MATCH_DISTANCE_METERS:
+            warnings.append(
+                f"unique template match is far from static center: {dist:.3f} m"
+            )
+    else:
+        best = matched[0].get("distance_for_sort")
+        second = matched[1].get("distance_for_sort")
+        if (
+            best is not None
+            and second is not None
+            and second - best >= CLEAR_NEAREST_RIGID_MATCH_MARGIN_METERS
+        ):
+            status = "resolved_by_nearest_center"
+            notes.append(
+                "multiple template matches; selected nearest runtime center "
+                f"by margin {second - best:.3f} m"
+            )
+        else:
+            status = "ambiguous"
+            warnings.append(
+                "multiple template matches and nearest-center margin is not reliable"
+            )
+            selected_rigid_object = None
+
+    return {
+        "semantic_mapping_status": status,
+        "rigid_object_handle_count": len(handles),
+        "matched_candidate_count": len(matched),
+        "matched_candidates": matched,
+        "selected_candidate": selected,
+        "selected_rigid_object": selected_rigid_object,
+        "notes": notes,
+        "warnings": warnings,
+    }
+
+
+def assign_sentinel_semantic_id(
+    rigid_obj: Any,
+    sentinel_id: int = SENTINEL_SEMANTIC_ID,
+) -> Dict[str, Any]:
+    if rigid_obj is None:
+        return {"sentinel_status": "not_assigned_no_rigid_object"}
+    if not hasattr(rigid_obj, "semantic_id"):
+        return {"sentinel_status": "not_assigned_missing_semantic_id_attr"}
+    try:
+        original_semantic_id = int(getattr(rigid_obj, "semantic_id"))
+    except (TypeError, ValueError):
+        return {
+            "sentinel_status": "not_assigned_original_semantic_id_not_integer",
+            "original_rigid_semantic_id": repr(getattr(rigid_obj, "semantic_id", None)),
+        }
+    rigid_obj.semantic_id = int(sentinel_id)
+    return {
+        "sentinel_status": "assigned",
+        "rigid_object": rigid_obj,
+        "original_rigid_semantic_id": original_semantic_id,
+        "sentinel_semantic_id": int(sentinel_id),
+    }
+
+
+def restore_original_semantic_id(assignment: Dict[str, Any]) -> None:
+    if assignment.get("sentinel_status") != "assigned":
+        return
+    rigid_obj = assignment.get("rigid_object")
+    if rigid_obj is None:
+        return
+    try:
+        rigid_obj.semantic_id = int(assignment["original_rigid_semantic_id"])
+    except Exception:
+        pass
+
+
+def mask_bbox(mask: Any) -> Optional[Dict[str, int]]:
+    if mask is None or not np.any(mask):
+        return None
+    ys, xs = np.where(mask)
+    return {
+        "x0": int(xs.min()),
+        "y0": int(ys.min()),
+        "x1": int(xs.max()),
+        "y1": int(ys.max()),
+        "area": int((xs.max() - xs.min() + 1) * (ys.max() - ys.min() + 1)),
+    }
+
+
+def empty_sentinel_visibility(
+    sentinel_id: Optional[int],
+    status: str,
+) -> Dict[str, Any]:
+    return {
+        "sentinel_status": status,
+        "sentinel_semantic_id": sentinel_id,
+        "sentinel_visible_pixels": 0,
+        "sentinel_image_fraction": 0.0,
+        "sentinel_bbox": None,
+        "sentinel_mask_bbox_fill_fraction": 0.0,
+        "sentinel_mask": None,
+    }
+
+
+def count_sentinel_pixels(semantic_obs: Any, sentinel_id: int) -> Dict[str, Any]:
+    arr = np.asarray(semantic_obs)
+    if arr.ndim == 3:
+        arr = arr[:, :, 0]
+    h, w = arr.shape[:2]
+    mask = arr == int(sentinel_id)
+    visible_pixels = int(np.count_nonzero(mask))
+    bbox = mask_bbox(mask)
+    if bbox is None:
+        fill_fraction = 0.0
+    else:
+        fill_fraction = float(visible_pixels / max(1, bbox["area"]))
+    return {
+        "sentinel_status": "counted",
+        "sentinel_semantic_id": int(sentinel_id),
+        "sentinel_visible_pixels": visible_pixels,
+        "sentinel_image_fraction": float(visible_pixels / max(1, int(h * w))),
+        "sentinel_bbox": bbox,
+        "sentinel_mask_bbox_fill_fraction": fill_fraction,
+        "sentinel_mask": mask,
+    }
+
+
 def safe_filename(value: str, max_len: int = 140) -> str:
     text = re.sub(r"[^A-Za-z0-9_.-]+", "_", value)
     return text[:max_len].strip("_") or "item"
@@ -1161,6 +1470,20 @@ def process_object_true(
         obj, sem_obj, sem_obj_index
     )
     semantic_ids = semantic_id_report["candidate_semantic_ids"]
+    rigid_mapping = resolve_target_rigid_object(sim, obj)
+    selected_rigid_object = rigid_mapping.pop("selected_rigid_object", None)
+    sentinel_assignment = assign_sentinel_semantic_id(selected_rigid_object)
+    sentinel_report = {
+        key: value
+        for key, value in sentinel_assignment.items()
+        if key != "rigid_object"
+    }
+    sentinel_id = sentinel_report.get("sentinel_semantic_id")
+    resolved_rigid_handle = (
+        (rigid_mapping.get("selected_candidate") or {}).get("handle")
+        if sentinel_report.get("sentinel_status") == "assigned"
+        else None
+    )
 
     candidate_plans = sample_candidate_positions(
         center=center,
@@ -1171,127 +1494,203 @@ def process_object_true(
     agent = sim.get_agent(0)
     candidate_results: List[Dict[str, Any]] = []
 
-    for plan in candidate_plans:
-        result = dict(plan)
-        result["candidate_semantic_ids"] = semantic_ids
-        result["candidate_semantic_id_diagnostics"] = semantic_id_report
-        try:
-            requested = plan["requested_position"]
-            snapped, snap_status = snap_navigable(sim.pathfinder, requested)
-            result["snap_status"] = snap_status
-            if snapped is None:
-                result["rejected"] = True
-                result["rejection_reason"] = snap_status
-                candidate_results.append(result)
-                continue
-
-            rotation_result = yaw_to_face_target(
-                snapped, np.array(target_center, dtype=np.float32)
+    try:
+        for plan in candidate_plans:
+            result = dict(plan)
+            result["semantic_mapping_status"] = rigid_mapping[
+                "semantic_mapping_status"
+            ]
+            result["candidate_semantic_ids"] = (
+                [int(sentinel_id)] if sentinel_id is not None else []
             )
-            if rotation_result is None:
-                result["rejected"] = True
-                result["rejection_reason"] = "cannot_compute_yaw_to_target"
-                candidate_results.append(result)
-                continue
-            rotation, rotation_diag = rotation_result
-            result["rotation_diagnostics"] = rotation_diag
+            result["candidate_semantic_id_diagnostics"] = semantic_id_report
+            try:
+                requested = plan["requested_position"]
+                snapped, snap_status = snap_navigable(sim.pathfinder, requested)
+                result["snap_status"] = snap_status
+                if snapped is None:
+                    result["rejected"] = True
+                    result["rejection_reason"] = snap_status
+                    candidate_results.append(result)
+                    continue
 
-            agent_state = habitat_sim.AgentState()
-            agent_state.position = snapped
-            agent_state.rotation = rotation
-            agent.set_state(agent_state)
-            observations = sim.get_sensor_observations()
-            rgb_obs = observations.get("rgb")
-            semantic_obs = observations.get("semantic")
-            semantic_obs_diag = semantic_observation_diagnostics(semantic_obs)
+                rotation_result = yaw_to_face_target(
+                    snapped, np.array(target_center, dtype=np.float32)
+                )
+                if rotation_result is None:
+                    result["rejected"] = True
+                    result["rejection_reason"] = "cannot_compute_yaw_to_target"
+                    candidate_results.append(result)
+                    continue
+                rotation, rotation_diag = rotation_result
+                result["rotation_diagnostics"] = rotation_diag
 
-            distance = euclidean(snapped.tolist(), target_center)
-            planar_dist = planar_distance_xz(snapped.tolist(), target_center)
-            if semantic_obs is not None and semantic_ids:
-                visibility = count_target_pixels(semantic_obs, semantic_ids)
-            else:
-                visibility = {
-                    "raw_candidate_semantic_ids": semantic_id_report[
-                        "raw_candidate_semantic_ids"
-                    ],
-                    "candidate_semantic_ids": semantic_ids,
-                    "invalid_candidate_semantic_ids_removed": semantic_id_report[
-                        "invalid_candidate_semantic_ids_removed"
-                    ],
-                    "semantic_id_filter_note": semantic_id_report[
-                        "semantic_id_filter_note"
-                    ],
-                    "visible_pixel_count": 0,
-                    "visible_pixels": 0,
-                    "image_fraction": 0.0,
-                    "semantic_id_pixel_counts": {},
-                    "pixel_counts_by_semantic_id": {},
-                    "best_semantic_id": None,
-                    "mask_bbox": None,
-                    "mask_bbox_fill_fraction": 0.0,
-                    "mask": None,
-                }
-            mask = visibility.pop("mask", None)
+                agent_state = habitat_sim.AgentState()
+                agent_state.position = snapped
+                agent_state.rotation = rotation
+                agent.set_state(agent_state)
+                observations = sim.get_sensor_observations()
+                rgb_obs = observations.get("rgb")
+                semantic_obs = observations.get("semantic")
+                semantic_obs_diag = semantic_observation_diagnostics(semantic_obs)
 
-            result.update(
-                {
-                    "navigable_position": snapped.tolist(),
-                    "agent_state": {
-                        "position": snapped.tolist(),
-                        "rotation": quat_to_coeffs(rotation).tolist(),
-                    },
-                    "distance_to_object": float(distance),
-                    "planar_distance_to_object_xz": float(planar_dist),
-                    "semantic_observation_diagnostics": semantic_obs_diag,
-                    "semantic_ids_checked": semantic_ids,
-                    "raw_candidate_semantic_ids": visibility[
-                        "raw_candidate_semantic_ids"
-                    ],
-                    "candidate_semantic_ids": visibility["candidate_semantic_ids"],
-                    "invalid_candidate_semantic_ids_removed": visibility[
-                        "invalid_candidate_semantic_ids_removed"
-                    ],
-                    "semantic_id_filter_note": visibility["semantic_id_filter_note"],
-                    "visible_pixel_count": visibility["visible_pixel_count"],
-                    "visible_pixels": visibility["visible_pixels"],
-                    "image_fraction": visibility["image_fraction"],
-                    "semantic_id_pixel_counts": visibility["semantic_id_pixel_counts"],
-                    "pixel_counts_by_semantic_id": visibility["pixel_counts_by_semantic_id"],
-                    "best_semantic_id": visibility["best_semantic_id"],
-                    "mask_bbox": visibility["mask_bbox"],
-                    "coverage_score": visibility["mask_bbox_fill_fraction"],
-                    "iou": None,
-                    "iou_note": (
-                        "not computed in prototype; no projected object "
-                        "extent/reference mask available"
-                    ),
-                }
-            )
+                distance = euclidean(snapped.tolist(), target_center)
+                planar_dist = planar_distance_xz(snapped.tolist(), target_center)
 
-            if args.debug_images and rgb_obs is not None and mask is not None:
-                if debug_state["written"] < args.max_debug_images:
-                    paths = write_debug_images(
-                        args.output_dir / "debug_images",
-                        obj["object_uid"],
-                        int(plan["candidate_index"]),
-                        rgb_obs,
-                        mask,
+                if semantic_obs is not None and semantic_ids:
+                    heuristic_visibility = count_target_pixels(
+                        semantic_obs, semantic_ids
                     )
-                    result["debug_images"] = paths
-                    debug_state["written"] += 1
-        except Exception as exc:  # noqa: BLE001
-            result.update(
-                {
-                    "candidate_error": repr(exc),
-                    "candidate_traceback": traceback.format_exc(),
-                    "rejected": True,
-                    "rejection_reason": "candidate_exception",
-                }
-            )
-            candidate_results.append(result)
-            continue
+                else:
+                    heuristic_visibility = {
+                        "raw_candidate_semantic_ids": semantic_id_report[
+                            "raw_candidate_semantic_ids"
+                        ],
+                        "candidate_semantic_ids": semantic_ids,
+                        "invalid_candidate_semantic_ids_removed": semantic_id_report[
+                            "invalid_candidate_semantic_ids_removed"
+                        ],
+                        "semantic_id_filter_note": semantic_id_report[
+                            "semantic_id_filter_note"
+                        ],
+                        "visible_pixel_count": 0,
+                        "visible_pixels": 0,
+                        "image_fraction": 0.0,
+                        "semantic_id_pixel_counts": {},
+                        "pixel_counts_by_semantic_id": {},
+                        "best_semantic_id": None,
+                        "mask_bbox": None,
+                        "mask_bbox_fill_fraction": 0.0,
+                        "mask": None,
+                    }
+                heuristic_visibility.pop("mask", None)
 
-        candidate_results.append(result)
+                if (
+                    semantic_obs is not None
+                    and sentinel_assignment.get("sentinel_status") == "assigned"
+                    and sentinel_id is not None
+                ):
+                    sentinel_visibility = count_sentinel_pixels(
+                        semantic_obs, int(sentinel_id)
+                    )
+                else:
+                    sentinel_visibility = empty_sentinel_visibility(
+                        sentinel_id,
+                        str(sentinel_assignment.get("sentinel_status", "not_assigned")),
+                    )
+                mask = sentinel_visibility.pop("sentinel_mask", None)
+                sentinel_pixels = int(sentinel_visibility["sentinel_visible_pixels"])
+                sentinel_pixel_counts = (
+                    {str(sentinel_id): sentinel_pixels}
+                    if sentinel_id is not None
+                    else {}
+                )
+                best_sentinel_id = (
+                    int(sentinel_id)
+                    if sentinel_id is not None and sentinel_pixels > 0
+                    else None
+                )
+
+                result.update(
+                    {
+                        "navigable_position": snapped.tolist(),
+                        "agent_state": {
+                            "position": snapped.tolist(),
+                            "rotation": quat_to_coeffs(rotation).tolist(),
+                        },
+                        "distance_to_object": float(distance),
+                        "planar_distance_to_object_xz": float(planar_dist),
+                        "semantic_observation_diagnostics": semantic_obs_diag,
+                        "semantic_ids_checked": (
+                            [int(sentinel_id)] if sentinel_id is not None else []
+                        ),
+                        "candidate_semantic_ids": (
+                            [int(sentinel_id)] if sentinel_id is not None else []
+                        ),
+                        "pixel_counts_by_semantic_id": sentinel_pixel_counts,
+                        "semantic_id_pixel_counts": sentinel_pixel_counts,
+                        "best_semantic_id": best_sentinel_id,
+                        "visible_pixel_count": sentinel_pixels,
+                        "visible_pixels": sentinel_pixels,
+                        "image_fraction": sentinel_visibility[
+                            "sentinel_image_fraction"
+                        ],
+                        "mask_bbox": sentinel_visibility["sentinel_bbox"],
+                        "coverage_score": sentinel_visibility[
+                            "sentinel_mask_bbox_fill_fraction"
+                        ],
+                        "semantic_mapping_status": rigid_mapping[
+                            "semantic_mapping_status"
+                        ],
+                        "rigid_object_handle": resolved_rigid_handle,
+                        "original_rigid_semantic_id": sentinel_report.get(
+                            "original_rigid_semantic_id"
+                        ),
+                        "sentinel_semantic_id": sentinel_id,
+                        "sentinel_visible_pixels": sentinel_pixels,
+                        "sentinel_bbox": sentinel_visibility["sentinel_bbox"],
+                        "sentinel_image_fraction": sentinel_visibility[
+                            "sentinel_image_fraction"
+                        ],
+                        "sentinel_status": sentinel_visibility["sentinel_status"],
+                        "heuristic_raw_candidate_semantic_ids": heuristic_visibility[
+                            "raw_candidate_semantic_ids"
+                        ],
+                        "heuristic_candidate_semantic_ids": heuristic_visibility[
+                            "candidate_semantic_ids"
+                        ],
+                        "heuristic_invalid_candidate_semantic_ids_removed": (
+                            heuristic_visibility[
+                                "invalid_candidate_semantic_ids_removed"
+                            ]
+                        ),
+                        "heuristic_pixel_counts_by_semantic_id": heuristic_visibility[
+                            "pixel_counts_by_semantic_id"
+                        ],
+                        "heuristic_best_semantic_id": heuristic_visibility[
+                            "best_semantic_id"
+                        ],
+                        "heuristic_visible_pixels": heuristic_visibility[
+                            "visible_pixels"
+                        ],
+                        "heuristic_image_fraction": heuristic_visibility[
+                            "image_fraction"
+                        ],
+                        "heuristic_mask_bbox": heuristic_visibility["mask_bbox"],
+                        "iou": None,
+                        "iou_note": (
+                            "not computed in prototype; no projected object "
+                            "extent/reference mask available"
+                        ),
+                    }
+                )
+
+                if args.debug_images and rgb_obs is not None and mask is not None:
+                    if debug_state["written"] < args.max_debug_images:
+                        paths = write_debug_images(
+                            args.output_dir / "debug_images",
+                            obj["object_uid"],
+                            int(plan["candidate_index"]),
+                            rgb_obs,
+                            mask,
+                        )
+                        result["debug_images"] = paths
+                        debug_state["written"] += 1
+            except Exception as exc:  # noqa: BLE001
+                result.update(
+                    {
+                        "candidate_error": repr(exc),
+                        "candidate_traceback": traceback.format_exc(),
+                        "rejected": True,
+                        "rejection_reason": "candidate_exception",
+                    }
+                )
+                candidate_results.append(result)
+                continue
+
+            candidate_results.append(result)
+    finally:
+        restore_original_semantic_id(sentinel_assignment)
 
     return {
         "object": obj,
@@ -1299,8 +1698,13 @@ def process_object_true(
         "fixed_camera": fixed_camera_summary(args),
         "semantic_scene_diagnostics": sem_scene_diag,
         "semantic_match": sem_match,
-        "semantic_ids_checked": semantic_ids,
+        "semantic_ids_checked": [int(sentinel_id)] if sentinel_id is not None else [],
+        "heuristic_semantic_ids_checked": semantic_ids,
         "candidate_semantic_id_diagnostics": semantic_id_report,
+        "semantic_mapping_status": rigid_mapping["semantic_mapping_status"],
+        "rigid_object_handle": resolved_rigid_handle,
+        "semantic_mapping": rigid_mapping,
+        **sentinel_report,
         "candidate_results": candidate_results,
         "threshold_sweep": evaluate_threshold_sweep(candidate_results),
     }
@@ -1440,12 +1844,19 @@ def finalize_result(result: Dict[str, Any]) -> Dict[str, Any]:
     objects_with_any_visible = 0
     rendered_candidates = 0
     candidates_with_visible_pixels = 0
+    heuristic_candidates_with_visible_pixels = 0
     candidate_error_count = 0
+    semantic_mapping_status_counts: Counter[str] = Counter()
+    sentinel_status_counts: Counter[str] = Counter()
 
     for obj_result in result["object_results"]:
         obj = obj_result.get("object") or {}
         if obj.get("category"):
             by_category[obj["category"]] += 1
+        if obj_result.get("semantic_mapping_status"):
+            semantic_mapping_status_counts[obj_result["semantic_mapping_status"]] += 1
+        if obj_result.get("sentinel_status"):
+            sentinel_status_counts[obj_result["sentinel_status"]] += 1
         candidates = obj_result.get("candidate_results") or []
         rendered_candidates += len(
             [c for c in candidates if c.get("visible_pixel_count") is not None]
@@ -1454,6 +1865,9 @@ def finalize_result(result: Dict[str, Any]) -> Dict[str, Any]:
             objects_with_any_visible += 1
         candidates_with_visible_pixels += len(
             [c for c in candidates if (c.get("visible_pixel_count") or 0) > 0]
+        )
+        heuristic_candidates_with_visible_pixels += len(
+            [c for c in candidates if (c.get("heuristic_visible_pixels") or 0) > 0]
         )
         candidate_error_count += len([c for c in candidates if c.get("candidate_error")])
 
@@ -1466,6 +1880,11 @@ def finalize_result(result: Dict[str, Any]) -> Dict[str, Any]:
         "objects_with_any_visible_pixels": objects_with_any_visible,
         "rendered_candidates": rendered_candidates,
         "candidates_with_visible_pixels": candidates_with_visible_pixels,
+        "heuristic_candidates_with_visible_pixels": (
+            heuristic_candidates_with_visible_pixels
+        ),
+        "semantic_mapping_status_counts": dict(semantic_mapping_status_counts),
+        "sentinel_status_counts": dict(sentinel_status_counts),
     }
     return result
 
@@ -1526,7 +1945,10 @@ def build_markdown(result: Dict[str, Any]) -> str:
             f"- candidate errors: {summary['candidate_error_count']}",
             f"- rendered candidates: {summary['rendered_candidates']}",
             f"- candidates with visible pixels: {summary['candidates_with_visible_pixels']}",
+            f"- heuristic candidates with visible pixels: {summary.get('heuristic_candidates_with_visible_pixels', 0)}",
             f"- objects with any visible pixels: {summary['objects_with_any_visible_pixels']}",
+            f"- semantic mapping statuses: {summary.get('semantic_mapping_status_counts', {})}",
+            f"- sentinel statuses: {summary.get('sentinel_status_counts', {})}",
             "",
             "## JSON Structure",
             "",
@@ -1539,7 +1961,7 @@ def build_markdown(result: Dict[str, Any]) -> str:
             "",
             "## Semantic Diagnostics",
             "",
-            "Non-dry-run object results include `semantic_scene_diagnostics` and `candidate_semantic_id_diagnostics`. Candidate results include `semantic_observation_diagnostics`, `raw_candidate_semantic_ids`, `candidate_semantic_ids`, `invalid_candidate_semantic_ids_removed`, `pixel_counts_by_semantic_id`, `best_semantic_id`, and `visible_pixels` when rendering reaches the sensor observation step.",
+            "Non-dry-run object results include `semantic_scene_diagnostics`, `semantic_mapping`, and `candidate_semantic_id_diagnostics`. Candidate results include sentinel-driven `visible_pixels` plus diagnostic `heuristic_*` fields when rendering reaches the sensor observation step.",
             "",
             "## Threshold Sweep",
             "",
