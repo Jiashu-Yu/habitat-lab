@@ -43,6 +43,13 @@ MIN_VISIBLE_PIXELS = [100, 300, 500, 1000]
 MIN_IMAGE_FRACTION = [0.001, 0.003, 0.005, 0.01]
 MAX_DISTANCE = [1.0, 1.5, 2.0, 3.0]
 MIN_VIEWPOINTS_PER_OBJECT = [1, 3, 5]
+INVALID_TARGET_SEMANTIC_IDS = {0}
+SEMANTIC_ID_FILTER_NOTE = (
+    "Semantic id 0 is excluded from target matching because observed HSSD "
+    "semantic frames can use it for background/void/unlabeled pixels. "
+    "String-parsed integer ids are retained as heuristic candidates for this "
+    "prototype and should be replaced by rigid-object/sentinel mapping."
+)
 
 habitat_sim = None
 np = None
@@ -709,35 +716,164 @@ def bounded_int_tokens(value: Any, max_abs_value: int = 1_000_000) -> List[int]:
     return ids
 
 
-def candidate_semantic_ids(
+def _record_semantic_id_source(
+    sources: Dict[str, List[int]],
+    source: str,
+    value: Any,
+) -> None:
+    if isinstance(value, bool):
+        return
+    if isinstance(value, int):
+        parsed = value
+    elif isinstance(value, float) and math.isfinite(value) and value.is_integer():
+        parsed = int(value)
+    else:
+        return
+    if parsed not in sources[source]:
+        sources[source].append(parsed)
+
+
+def _candidate_semantic_id_sources(
     obj: Dict[str, Any],
     sem_obj: Any,
     sem_obj_index: Optional[int],
-) -> List[int]:
-    ids = set()
+) -> Dict[str, List[int]]:
+    sources: Dict[str, List[int]] = defaultdict(list)
     if sem_obj_index is not None:
-        ids.add(int(sem_obj_index))
+        _record_semantic_id_source(
+            sources, "semantic_scene_index_unverified", sem_obj_index
+        )
     instance_index = obj.get("instance_index")
     if isinstance(instance_index, int):
-        ids.add(instance_index)
-        ids.add(instance_index + 1)
+        _record_semantic_id_source(
+            sources, "scene_instance_index_unverified", instance_index
+        )
+        _record_semantic_id_source(
+            sources, "scene_instance_index_plus_one_unverified", instance_index + 1
+        )
     if sem_obj is not None:
         for attr in ["semantic_id", "object_id", "id"]:
             value = getattr(sem_obj, attr, None)
             if value is None:
                 continue
             if isinstance(value, int):
-                ids.add(value)
+                _record_semantic_id_source(
+                    sources, f"semantic_object.{attr}", value
+                )
                 continue
-            ids.update(bounded_int_tokens(value))
+            for token in bounded_int_tokens(value):
+                _record_semantic_id_source(
+                    sources, f"semantic_object.{attr}.parsed_int_unverified", token
+                )
     for field in [
         "object_uid",
         "template_name",
         "resolved_metadata_id",
         "object_name",
     ]:
-        ids.update(bounded_int_tokens(obj.get(field)))
-    return sorted(ids)
+        for token in bounded_int_tokens(obj.get(field)):
+            _record_semantic_id_source(
+                sources, f"object.{field}.parsed_int_unverified", token
+            )
+    return {key: sorted(values) for key, values in sources.items()}
+
+
+def invalid_semantic_id_reason(sem_id: Any) -> Optional[str]:
+    if isinstance(sem_id, bool):
+        return "bool_is_not_a_semantic_id"
+    try:
+        sem_int = int(sem_id)
+    except (TypeError, ValueError):
+        return "not_an_integer"
+    if sem_int in INVALID_TARGET_SEMANTIC_IDS:
+        return "background_or_void_semantic_id"
+    if sem_int < 0:
+        return "negative_semantic_id"
+    return None
+
+
+def filter_candidate_semantic_ids(
+    semantic_ids: Iterable[int],
+    source_lookup: Optional[Dict[int, List[str]]] = None,
+) -> Dict[str, Any]:
+    source_lookup = source_lookup or {}
+    raw_ids: List[int] = []
+    valid_ids: List[int] = []
+    invalid_removed: List[Dict[str, Any]] = []
+    for sem_id in semantic_ids:
+        try:
+            sem_int = int(sem_id)
+        except (TypeError, ValueError):
+            invalid_removed.append(
+                {
+                    "semantic_id": sem_id,
+                    "reason": "not_an_integer",
+                    "sources": source_lookup.get(sem_id, []),
+                }
+            )
+            continue
+        if sem_int not in raw_ids:
+            raw_ids.append(sem_int)
+        reason = invalid_semantic_id_reason(sem_int)
+        if reason is not None:
+            invalid_removed.append(
+                {
+                    "semantic_id": sem_int,
+                    "reason": reason,
+                    "sources": source_lookup.get(sem_int, []),
+                }
+            )
+            continue
+        if sem_int not in valid_ids:
+            valid_ids.append(sem_int)
+    return {
+        "raw_candidate_semantic_ids": sorted(raw_ids),
+        "candidate_semantic_ids": sorted(valid_ids),
+        "invalid_candidate_semantic_ids_removed": sorted(
+            invalid_removed, key=lambda item: str(item["semantic_id"])
+        ),
+        "semantic_id_filter_note": SEMANTIC_ID_FILTER_NOTE,
+    }
+
+
+def candidate_semantic_id_diagnostics(
+    obj: Dict[str, Any],
+    sem_obj: Any,
+    sem_obj_index: Optional[int],
+) -> Dict[str, Any]:
+    sources = _candidate_semantic_id_sources(obj, sem_obj, sem_obj_index)
+    source_lookup: Dict[int, List[str]] = defaultdict(list)
+    for source, values in sources.items():
+        for value in values:
+            source_lookup[int(value)].append(source)
+    filter_report = filter_candidate_semantic_ids(source_lookup.keys(), source_lookup)
+    heuristic_ids = sorted(
+        {
+            value
+            for source, values in sources.items()
+            if source.endswith("_unverified")
+            or ".parsed_int_unverified" in source
+            for value in values
+            if invalid_semantic_id_reason(value) is None
+        }
+    )
+    filter_report.update(
+        {
+            "candidate_semantic_id_sources": sources,
+            "heuristic_candidate_semantic_ids": heuristic_ids,
+        }
+    )
+    return filter_report
+
+
+def candidate_semantic_ids(
+    obj: Dict[str, Any],
+    sem_obj: Any,
+    sem_obj_index: Optional[int],
+) -> List[int]:
+    return candidate_semantic_id_diagnostics(
+        obj, sem_obj, sem_obj_index
+    )["candidate_semantic_ids"]
 
 
 def snap_navigable(pathfinder: Any, requested: List[float]) -> Tuple[Optional[Any], str]:
@@ -855,6 +991,8 @@ def yaw_to_face_target(position: Any, target_center: Any):
 
 
 def count_target_pixels(semantic_obs: Any, semantic_ids: List[int]) -> Dict[str, Any]:
+    filter_report = filter_candidate_semantic_ids(semantic_ids)
+    filtered_semantic_ids = filter_report["candidate_semantic_ids"]
     arr = np.asarray(semantic_obs)
     if arr.ndim == 3:
         arr = arr[:, :, 0]
@@ -864,7 +1002,7 @@ def count_target_pixels(semantic_obs: Any, semantic_ids: List[int]) -> Dict[str,
     per_id: Dict[str, int] = {}
     best_semantic_id = None
     best_count = 0
-    for sem_id in semantic_ids:
+    for sem_id in filtered_semantic_ids:
         this_mask = arr == sem_id
         count = int(np.count_nonzero(this_mask))
         per_id[str(sem_id)] = count
@@ -884,7 +1022,12 @@ def count_target_pixels(semantic_obs: Any, semantic_ids: List[int]) -> Dict[str,
         bbox = {"x0": x0, "y0": y0, "x1": x1, "y1": y1, "area": bbox_area}
         fill_fraction = float(visible_pixels / max(1, bbox_area))
     return {
-        "candidate_semantic_ids": semantic_ids,
+        "raw_candidate_semantic_ids": filter_report["raw_candidate_semantic_ids"],
+        "candidate_semantic_ids": filtered_semantic_ids,
+        "invalid_candidate_semantic_ids_removed": filter_report[
+            "invalid_candidate_semantic_ids_removed"
+        ],
+        "semantic_id_filter_note": filter_report["semantic_id_filter_note"],
         "visible_pixel_count": visible_pixels,
         "visible_pixels": visible_pixels,
         "image_fraction": float(visible_pixels / max(1, total)),
@@ -1014,7 +1157,10 @@ def process_object_true(
     target_center = (
         sem_match.get("semantic_center") if sem_match.get("semantic_center") else center
     )
-    semantic_ids = candidate_semantic_ids(obj, sem_obj, sem_obj_index)
+    semantic_id_report = candidate_semantic_id_diagnostics(
+        obj, sem_obj, sem_obj_index
+    )
+    semantic_ids = semantic_id_report["candidate_semantic_ids"]
 
     candidate_plans = sample_candidate_positions(
         center=center,
@@ -1028,6 +1174,7 @@ def process_object_true(
     for plan in candidate_plans:
         result = dict(plan)
         result["candidate_semantic_ids"] = semantic_ids
+        result["candidate_semantic_id_diagnostics"] = semantic_id_report
         try:
             requested = plan["requested_position"]
             snapped, snap_status = snap_navigable(sim.pathfinder, requested)
@@ -1064,7 +1211,16 @@ def process_object_true(
                 visibility = count_target_pixels(semantic_obs, semantic_ids)
             else:
                 visibility = {
+                    "raw_candidate_semantic_ids": semantic_id_report[
+                        "raw_candidate_semantic_ids"
+                    ],
                     "candidate_semantic_ids": semantic_ids,
+                    "invalid_candidate_semantic_ids_removed": semantic_id_report[
+                        "invalid_candidate_semantic_ids_removed"
+                    ],
+                    "semantic_id_filter_note": semantic_id_report[
+                        "semantic_id_filter_note"
+                    ],
                     "visible_pixel_count": 0,
                     "visible_pixels": 0,
                     "image_fraction": 0.0,
@@ -1088,7 +1244,14 @@ def process_object_true(
                     "planar_distance_to_object_xz": float(planar_dist),
                     "semantic_observation_diagnostics": semantic_obs_diag,
                     "semantic_ids_checked": semantic_ids,
+                    "raw_candidate_semantic_ids": visibility[
+                        "raw_candidate_semantic_ids"
+                    ],
                     "candidate_semantic_ids": visibility["candidate_semantic_ids"],
+                    "invalid_candidate_semantic_ids_removed": visibility[
+                        "invalid_candidate_semantic_ids_removed"
+                    ],
+                    "semantic_id_filter_note": visibility["semantic_id_filter_note"],
                     "visible_pixel_count": visibility["visible_pixel_count"],
                     "visible_pixels": visibility["visible_pixels"],
                     "image_fraction": visibility["image_fraction"],
@@ -1137,6 +1300,7 @@ def process_object_true(
         "semantic_scene_diagnostics": sem_scene_diag,
         "semantic_match": sem_match,
         "semantic_ids_checked": semantic_ids,
+        "candidate_semantic_id_diagnostics": semantic_id_report,
         "candidate_results": candidate_results,
         "threshold_sweep": evaluate_threshold_sweep(candidate_results),
     }
@@ -1375,7 +1539,7 @@ def build_markdown(result: Dict[str, Any]) -> str:
             "",
             "## Semantic Diagnostics",
             "",
-            "Non-dry-run object results include `semantic_scene_diagnostics`. Candidate results include `semantic_observation_diagnostics`, `candidate_semantic_ids`, `pixel_counts_by_semantic_id`, `best_semantic_id`, and `visible_pixels` when rendering reaches the sensor observation step.",
+            "Non-dry-run object results include `semantic_scene_diagnostics` and `candidate_semantic_id_diagnostics`. Candidate results include `semantic_observation_diagnostics`, `raw_candidate_semantic_ids`, `candidate_semantic_ids`, `invalid_candidate_semantic_ids_removed`, `pixel_counts_by_semantic_id`, `best_semantic_id`, and `visible_pixels` when rendering reaches the sensor observation step.",
             "",
             "## Threshold Sweep",
             "",
@@ -1410,6 +1574,7 @@ def build_markdown(result: Dict[str, Any]) -> str:
         [
             "## Notes",
             "",
+            "- Semantic ID `0` is filtered out before target-mask construction because HSSD semantic frames can use it for background/void/unlabeled pixels.",
             "- `image_fraction` is visible target pixels divided by full image pixels.",
             "- `coverage_score` is currently mask fill inside the observed target-mask bounding box.",
             "- `iou` is left as `null` in this prototype because a projected full-object reference mask is not yet available.",

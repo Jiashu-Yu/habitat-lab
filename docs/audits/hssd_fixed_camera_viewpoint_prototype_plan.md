@@ -135,6 +135,7 @@ For each selected target object:
 9. Render RGB and semantic observations.
 10. Count target semantic pixels.
     Candidate target semantic IDs include semantic-scene object IDs when available, `scene_instance.json` `instance_index`, `instance_index + 1`, and bounded standalone integer tokens parsed from object handles/UIDs.
+    Semantic ID `0` is filtered out before target-mask construction because HSSD semantic frames can use it for background/void/unlabeled pixels; removed IDs are preserved in diagnostics.
 11. Compute:
     - semantic observation diagnostics: dtype, min, max, unique sample, and shape
     - visible pixel count
@@ -182,13 +183,16 @@ Each non-dry-run object result may include:
 - `semantic_scene_diagnostics`
 - `semantic_match`
 - `semantic_ids_checked`
+- `candidate_semantic_id_diagnostics`, including raw IDs, filtered IDs, source labels, removed invalid IDs, and heuristic IDs
 - `threshold_sweep`
 
 Each rendered candidate result may include:
 
 - `rotation_diagnostics`, including `rotation_norm_before`, `rotation_norm_after`, and whether normalization/fallback occurred
 - `semantic_observation_diagnostics`, including `semantic_sensor_dtype`, `semantic_min`, `semantic_max`, `semantic_unique_sample`, and `semantic_unique_count`
+- `raw_candidate_semantic_ids`
 - `candidate_semantic_ids`
+- `invalid_candidate_semantic_ids_removed`
 - `pixel_counts_by_semantic_id`
 - `best_semantic_id`
 - `visible_pixels` / `visible_pixel_count`
@@ -198,7 +202,7 @@ Each rendered candidate result may include:
 - Dry-run mode does not prove navigability or visibility.
 - Semantic object matching is a prototype nearest-AABB-center heuristic.
 - If `sim.semantic_scene.objects` is empty, the prototype cannot perform AABB matching, but it still records semantic observation diagnostics for rendered candidates.
-- Candidate semantic ID fallbacks can include IDs that are not the target. Debug images and manual checks remain required before trusting pass/fail visibility thresholds.
+- Candidate semantic ID fallbacks can include IDs that are not the target. ID `0` is now excluded from target masks, but non-zero heuristic IDs can still refer to neighboring objects until rigid-object/sentinel mapping is implemented. Debug images and manual checks remain required before trusting pass/fail visibility thresholds.
 - `iou` is left as `null` because the prototype does not yet compute a projected full-object reference mask.
 - `coverage_score` currently means target-mask fill inside the observed target-mask bounding box.
 - Object center from static metadata is approximate and ignores object rotation.
@@ -220,6 +224,8 @@ For a small server run:
 1. Run dry mode locally to confirm category/object selection.
 2. Run small mode on the server with `--debug-images`.
 3. Manually inspect debug RGB/mask pairs for each category.
-4. Tune thresholds for fixed-camera visibility.
-5. Add a stronger semantic-object matching method if nearest AABB is unreliable.
-6. Add final writer for ObjectNav-compatible `view_points` only after the visibility audit is trusted.
+4. Confirm `best_semantic_id == 0` is zero after Phase 1 filtering.
+5. Add rigid-object/sentinel semantic ID mapping for HSSD instance-level masks.
+6. Tune thresholds for fixed-camera visibility.
+7. Add a stronger semantic-object matching method if nearest AABB is unreliable.
+8. Add final writer for ObjectNav-compatible `view_points` only after the visibility audit is trusted.
