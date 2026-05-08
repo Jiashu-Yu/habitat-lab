@@ -1,0 +1,1040 @@
+{
+  "category_viewpoint_count_distributions": {
+    "bed": {
+      "goals_with_exactly_one_viewpoint": 0,
+      "histogram_small_counts": {
+        "1": 0,
+        "10": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "max": 1488,
+      "mean": 440.61961722488036,
+      "median": 390.0,
+      "min": 12,
+      "num_goals": 418,
+      "p01": 87.05999999999999,
+      "p05": 150.55,
+      "p10": 174.7,
+      "p90": 782.3,
+      "p95": 907.0499999999998,
+      "p99": 1163.5799999999995,
+      "q1": 256.25,
+      "q3": 560.75,
+      "share_goals_with_exactly_one_viewpoint": 0.0
+    },
+    "chair": {
+      "goals_with_exactly_one_viewpoint": 3,
+      "histogram_small_counts": {
+        "1": 3,
+        "10": 2,
+        "2": 6,
+        "3": 6,
+        "4": 4,
+        "5": 4,
+        "6": 5,
+        "7": 3,
+        "8": 1,
+        "9": 3
+      },
+      "max": 956,
+      "mean": 231.73528166031343,
+      "median": 223.0,
+      "min": 1,
+      "num_goals": 2361,
+      "p01": 6.0,
+      "p05": 48.0,
+      "p10": 80.0,
+      "p90": 373.0,
+      "p95": 458.0,
+      "p99": 597.8000000000011,
+      "q1": 146.0,
+      "q3": 301.0,
+      "share_goals_with_exactly_one_viewpoint": 0.0012706480304955528
+    },
+    "couch": {
+      "goals_with_exactly_one_viewpoint": 1,
+      "histogram_small_counts": {
+        "1": 1,
+        "10": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 0,
+        "7": 0,
+        "8": 0,
+        "9": 0
+      },
+      "max": 2594,
+      "mean": 520.7817745803358,
+      "median": 414.0,
+      "min": 1,
+      "num_goals": 417,
+      "p01": 36.28,
+      "p05": 105.8,
+      "p10": 151.6,
+      "p90": 1017.6000000000001,
+      "p95": 1437.7999999999997,
+      "p99": 2006.239999999999,
+      "q1": 258.0,
+      "q3": 632.0,
+      "share_goals_with_exactly_one_viewpoint": 0.002398081534772182
+    },
+    "potted_plant": {
+      "goals_with_exactly_one_viewpoint": 13,
+      "histogram_small_counts": {
+        "1": 13,
+        "10": 4,
+        "2": 8,
+        "3": 10,
+        "4": 3,
+        "5": 4,
+        "6": 2,
+        "7": 6,
+        "8": 2,
+        "9": 6
+      },
+      "max": 5589,
+      "mean": 164.94541361845808,
+      "median": 129.0,
+      "min": 1,
+      "num_goals": 1777,
+      "p01": 2.0,
+      "p05": 15.800000000000011,
+      "p10": 30.0,
+      "p90": 308.4000000000001,
+      "p95": 386.39999999999964,
+      "p99": 747.24,
+      "q1": 70.0,
+      "q3": 213.0,
+      "share_goals_with_exactly_one_viewpoint": 0.007315700619020821
+    },
+    "toilet": {
+      "goals_with_exactly_one_viewpoint": 0,
+      "histogram_small_counts": {
+        "1": 0,
+        "10": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "6": 1,
+        "7": 1,
+        "8": 0,
+        "9": 1
+      },
+      "max": 332,
+      "mean": 126.55601659751038,
+      "median": 115.0,
+      "min": 6,
+      "num_goals": 241,
+      "p01": 16.599999999999998,
+      "p05": 52.0,
+      "p10": 60.0,
+      "p90": 225.0,
+      "p95": 244.0,
+      "p99": 298.59999999999997,
+      "q1": 75.0,
+      "q3": 161.0,
+      "share_goals_with_exactly_one_viewpoint": 0.0
+    },
+    "tv": {
+      "goals_with_exactly_one_viewpoint": 0,
+      "histogram_small_counts": {
+        "1": 0,
+        "10": 0,
+        "2": 2,
+        "3": 1,
+        "4": 2,
+        "5": 0,
+        "6": 2,
+        "7": 0,
+        "8": 1,
+        "9": 2
+      },
+      "max": 638,
+      "mean": 155.1344827586207,
+      "median": 150.5,
+      "min": 2,
+      "num_goals": 290,
+      "p01": 3.89,
+      "p05": 15.450000000000001,
+      "p10": 40.900000000000006,
+      "p90": 273.20000000000005,
+      "p95": 322.0,
+      "p99": 483.3100000000003,
+      "q1": 87.25,
+      "q3": 200.75,
+      "share_goals_with_exactly_one_viewpoint": 0.0
+    }
+  },
+  "dataset_root": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab",
+  "method": "Static read of train/val content JSON/JSON.GZ shards; no Habitat simulation.",
+  "one_viewpoint_goals": [
+    {
+      "category_viewpoint_count_distribution_position": {
+        "category_distribution_summary": {
+          "max": 956,
+          "mean": 231.73528166031343,
+          "median": 223.0,
+          "min": 1,
+          "p05": 48.0,
+          "p95": 458.0,
+          "q1": 146.0,
+          "q3": 301.0
+        },
+        "is_category_minimum": true,
+        "num_goals_in_category": 2361,
+        "num_goals_in_category_with_exactly_one_viewpoint": 3,
+        "percentile_leq_this_count": 0.0012706480304955528,
+        "plain_english_position": "bottom 3/2361 goals in category by viewpoint count",
+        "share_of_category_goals_with_exactly_one_viewpoint": 0.0012706480304955528,
+        "viewpoint_count": 1
+      },
+      "episodes_whose_target_set_contains_this_goal": 5,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\val\\content\\104862384_172226319.json.gz",
+      "goal_index": 6,
+      "goal_position": [
+        -5.86212,
+        0.49523,
+        0.72276
+      ],
+      "goals_key": "104862384_172226319_chair",
+      "object_category": "chair",
+      "object_id": 123,
+      "object_name": "f6b5bf924de25d8ca15fe6e233045025e21c2be6_:0000",
+      "object_name_id": null,
+      "scene_id": "104862384_172226319",
+      "split": "val",
+      "viewpoint": {
+        "agent_state.position": [
+          -7.26336,
+          0.19176,
+          0.58908
+        ],
+        "agent_state.rotation": [
+          0.0,
+          -0.73992,
+          0.0,
+          0.67269
+        ],
+        "iou": 0.16145
+      }
+    },
+    {
+      "category_viewpoint_count_distribution_position": {
+        "category_distribution_summary": {
+          "max": 956,
+          "mean": 231.73528166031343,
+          "median": 223.0,
+          "min": 1,
+          "p05": 48.0,
+          "p95": 458.0,
+          "q1": 146.0,
+          "q3": 301.0
+        },
+        "is_category_minimum": true,
+        "num_goals_in_category": 2361,
+        "num_goals_in_category_with_exactly_one_viewpoint": 3,
+        "percentile_leq_this_count": 0.0012706480304955528,
+        "plain_english_position": "bottom 3/2361 goals in category by viewpoint count",
+        "share_of_category_goals_with_exactly_one_viewpoint": 0.0012706480304955528,
+        "viewpoint_count": 1
+      },
+      "episodes_whose_target_set_contains_this_goal": 333,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\105515151_173104068.json.gz",
+      "goal_index": 79,
+      "goal_position": [
+        16.96086,
+        0.48943,
+        -4.62649
+      ],
+      "goals_key": "105515151_173104068_chair",
+      "object_category": "chair",
+      "object_id": 960,
+      "object_name": "7df0dd6937e5576eb07c70edcd4d5f6c8d9f549f_part_3_:0000",
+      "object_name_id": null,
+      "scene_id": "105515151_173104068",
+      "split": "train",
+      "viewpoint": {
+        "agent_state.position": [
+          16.34279,
+          0.191,
+          -5.86612
+        ],
+        "agent_state.rotation": [
+          0.0,
+          -0.97338,
+          0.0,
+          0.2292
+        ],
+        "iou": 0.00129
+      }
+    },
+    {
+      "category_viewpoint_count_distribution_position": {
+        "category_distribution_summary": {
+          "max": 956,
+          "mean": 231.73528166031343,
+          "median": 223.0,
+          "min": 1,
+          "p05": 48.0,
+          "p95": 458.0,
+          "q1": 146.0,
+          "q3": 301.0
+        },
+        "is_category_minimum": true,
+        "num_goals_in_category": 2361,
+        "num_goals_in_category_with_exactly_one_viewpoint": 3,
+        "percentile_leq_this_count": 0.0012706480304955528,
+        "plain_english_position": "bottom 3/2361 goals in category by viewpoint count",
+        "share_of_category_goals_with_exactly_one_viewpoint": 0.0012706480304955528,
+        "viewpoint_count": 1
+      },
+      "episodes_whose_target_set_contains_this_goal": 333,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\108294846_176710506.json.gz",
+      "goal_index": 11,
+      "goal_position": [
+        -25.7485,
+        0.51187,
+        -3.34277
+      ],
+      "goals_key": "108294846_176710506_chair",
+      "object_category": "chair",
+      "object_id": 77,
+      "object_name": "8a042c83502854ccd12ff65ca73cc273f8a1c7e5_part_1_:0007",
+      "object_name_id": null,
+      "scene_id": "108294846_176710506",
+      "split": "train",
+      "viewpoint": {
+        "agent_state.position": [
+          -26.60947,
+          0.19904,
+          -2.34451
+        ],
+        "agent_state.rotation": [
+          0.0,
+          -0.34838,
+          0.0,
+          0.93735
+        ],
+        "iou": 0.05883
+      }
+    },
+    {
+      "category_viewpoint_count_distribution_position": {
+        "category_distribution_summary": {
+          "max": 2594,
+          "mean": 520.7817745803358,
+          "median": 414.0,
+          "min": 1,
+          "p05": 105.8,
+          "p95": 1437.7999999999997,
+          "q1": 258.0,
+          "q3": 632.0
+        },
+        "is_category_minimum": true,
+        "num_goals_in_category": 417,
+        "num_goals_in_category_with_exactly_one_viewpoint": 1,
+        "percentile_leq_this_count": 0.002398081534772182,
+        "plain_english_position": "bottom 1/417 goals in category by viewpoint count",
+        "share_of_category_goals_with_exactly_one_viewpoint": 0.002398081534772182,
+        "viewpoint_count": 1
+      },
+      "episodes_whose_target_set_contains_this_goal": 166,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\104348160_171513093.json.gz",
+      "goal_index": 2,
+      "goal_position": [
+        -0.88389,
+        0.38503,
+        -1.44201
+      ],
+      "goals_key": "104348160_171513093_couch",
+      "object_category": "couch",
+      "object_id": 59,
+      "object_name": "85a26550bdf81dc4da5389afd672a933bb5cc4d7_:0000",
+      "object_name_id": null,
+      "scene_id": "104348160_171513093",
+      "split": "train",
+      "viewpoint": {
+        "agent_state.position": [
+          -2.29002,
+          0.19369,
+          -3.13753
+        ],
+        "agent_state.rotation": [
+          0.0,
+          -0.94067,
+          0.0,
+          0.33931
+        ],
+        "iou": 0.03751
+      }
+    },
+    {
+      "category_viewpoint_count_distribution_position": {
+        "category_distribution_summary": {
+          "max": 5589,
+          "mean": 164.94541361845808,
+          "median": 129.0,
+          "min": 1,
+          "p05": 15.800000000000011,
+          "p95": 386.39999999999964,
+          "q1": 70.0,
+          "q3": 213.0
+        },
+        "is_category_minimum": true,
+        "num_goals_in_category": 1777,
+        "num_goals_in_category_with_exactly_one_viewpoint": 13,
+        "percentile_leq_this_count": 0.007315700619020821,
+        "plain_english_position": "bottom 13/1777 goals in category by viewpoint count",
+        "share_of_category_goals_with_exactly_one_viewpoint": 0.007315700619020821,
+        "viewpoint_count": 1
+      },
+      "episodes_whose_target_set_contains_this_goal": 166,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\102816729.json.gz",
+      "goal_index": 15,
+      "goal_position": [
+        -6.35276,
+        0.89745,
+        0.37155
+      ],
+      "goals_key": "102816729_potted_plant",
+      "object_category": "potted_plant",
+      "object_id": 164,
+      "object_name": "c65b5e4533cf2fc2a8c145dddddfc79ba394c25a_:0000",
+      "object_name_id": null,
+      "scene_id": "102816729",
+      "split": "train",
+      "viewpoint": {
+        "agent_state.position": [
+          -5.26389,
+          0.09346,
+          0.65518
+        ],
+        "agent_state.rotation": [
+          0.0,
+          0.61152,
+          0.0,
+          0.79123
+        ],
+        "iou": 0.0471
+      }
+    },
+    {
+      "category_viewpoint_count_distribution_position": {
+        "category_distribution_summary": {
+          "max": 5589,
+          "mean": 164.94541361845808,
+          "median": 129.0,
+          "min": 1,
+          "p05": 15.800000000000011,
+          "p95": 386.39999999999964,
+          "q1": 70.0,
+          "q3": 213.0
+        },
+        "is_category_minimum": true,
+        "num_goals_in_category": 1777,
+        "num_goals_in_category_with_exactly_one_viewpoint": 13,
+        "percentile_leq_this_count": 0.007315700619020821,
+        "plain_english_position": "bottom 13/1777 goals in category by viewpoint count",
+        "share_of_category_goals_with_exactly_one_viewpoint": 0.007315700619020821,
+        "viewpoint_count": 1
+      },
+      "episodes_whose_target_set_contains_this_goal": 5,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\val\\content\\102816756.json.gz",
+      "goal_index": 20,
+      "goal_position": [
+        -4.77935,
+        0.9102,
+        -9.11411
+      ],
+      "goals_key": "102816756_potted_plant",
+      "object_category": "potted_plant",
+      "object_id": 202,
+      "object_name": "b79121538512576ec56d645e67e30fc5ebefd858_:0000",
+      "object_name_id": null,
+      "scene_id": "102816756",
+      "split": "val",
+      "viewpoint": {
+        "agent_state.position": [
+          -4.70867,
+          0.09346,
+          -8.02034
+        ],
+        "agent_state.rotation": [
+          0.0,
+          0.03226,
+          0.0,
+          0.99948
+        ],
+        "iou": 0.02858
+      }
+    },
+    {
+      "category_viewpoint_count_distribution_position": {
+        "category_distribution_summary": {
+          "max": 5589,
+          "mean": 164.94541361845808,
+          "median": 129.0,
+          "min": 1,
+          "p05": 15.800000000000011,
+          "p95": 386.39999999999964,
+          "q1": 70.0,
+          "q3": 213.0
+        },
+        "is_category_minimum": true,
+        "num_goals_in_category": 1777,
+        "num_goals_in_category_with_exactly_one_viewpoint": 13,
+        "percentile_leq_this_count": 0.007315700619020821,
+        "plain_english_position": "bottom 13/1777 goals in category by viewpoint count",
+        "share_of_category_goals_with_exactly_one_viewpoint": 0.007315700619020821,
+        "viewpoint_count": 1
+      },
+      "episodes_whose_target_set_contains_this_goal": 250,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\103997403_171030405.json.gz",
+      "goal_index": 2,
+      "goal_position": [
+        -8.54819,
+        0.867,
+        -2.63375
+      ],
+      "goals_key": "103997403_171030405_potted_plant",
+      "object_category": "potted_plant",
+      "object_id": 32,
+      "object_name": "dd7020ee1b0faeca3b3295e6abc9f3fa4a1a1d13_:0000",
+      "object_name_id": null,
+      "scene_id": "103997403_171030405",
+      "split": "train",
+      "viewpoint": {
+        "agent_state.position": [
+          -9.48319,
+          0.09346,
+          -3.28375
+        ],
+        "agent_state.rotation": [
+          0.0,
+          -0.88623,
+          0.0,
+          0.46325
+        ],
+        "iou": 0.01831
+      }
+    },
+    {
+      "category_viewpoint_count_distribution_position": {
+        "category_distribution_summary": {
+          "max": 5589,
+          "mean": 164.94541361845808,
+          "median": 129.0,
+          "min": 1,
+          "p05": 15.800000000000011,
+          "p95": 386.39999999999964,
+          "q1": 70.0,
+          "q3": 213.0
+        },
+        "is_category_minimum": true,
+        "num_goals_in_category": 1777,
+        "num_goals_in_category_with_exactly_one_viewpoint": 13,
+        "percentile_leq_this_count": 0.007315700619020821,
+        "plain_english_position": "bottom 13/1777 goals in category by viewpoint count",
+        "share_of_category_goals_with_exactly_one_viewpoint": 0.007315700619020821,
+        "viewpoint_count": 1
+      },
+      "episodes_whose_target_set_contains_this_goal": 200,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\103997541_171030615.json.gz",
+      "goal_index": 7,
+      "goal_position": [
+        -6.13742,
+        1.97775,
+        2.25798
+      ],
+      "goals_key": "103997541_171030615_potted_plant",
+      "object_category": "potted_plant",
+      "object_id": 101,
+      "object_name": "8d017fc7709614540587256fc11b809c9d7dc570_:0000",
+      "object_name_id": null,
+      "scene_id": "103997541_171030615",
+      "split": "train",
+      "viewpoint": {
+        "agent_state.position": [
+          -7.13007,
+          0.08293,
+          2.06889
+        ],
+        "agent_state.rotation": [
+          0.0,
+          -0.77043,
+          0.0,
+          0.63752
+        ],
+        "iou": 0.00102
+      }
+    },
+    {
+      "category_viewpoint_count_distribution_position": {
+        "category_distribution_summary": {
+          "max": 5589,
+          "mean": 164.94541361845808,
+          "median": 129.0,
+          "min": 1,
+          "p05": 15.800000000000011,
+          "p95": 386.39999999999964,
+          "q1": 70.0,
+          "q3": 213.0
+        },
+        "is_category_minimum": true,
+        "num_goals_in_category": 1777,
+        "num_goals_in_category_with_exactly_one_viewpoint": 13,
+        "percentile_leq_this_count": 0.007315700619020821,
+        "plain_english_position": "bottom 13/1777 goals in category by viewpoint count",
+        "share_of_category_goals_with_exactly_one_viewpoint": 0.007315700619020821,
+        "viewpoint_count": 1
+      },
+      "episodes_whose_target_set_contains_this_goal": 200,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\103997541_171030615.json.gz",
+      "goal_index": 15,
+      "goal_position": [
+        -6.15257,
+        1.9682,
+        1.85821
+      ],
+      "goals_key": "103997541_171030615_potted_plant",
+      "object_category": "potted_plant",
+      "object_id": 119,
+      "object_name": "ea233d6e83ef6d189dc92600b820430307b58cea_:0000",
+      "object_name_id": null,
+      "scene_id": "103997541_171030615",
+      "split": "train",
+      "viewpoint": {
+        "agent_state.position": [
+          -7.25037,
+          0.08293,
+          1.84117
+        ],
+        "agent_state.rotation": [
+          0.0,
+          -0.71257,
+          0.0,
+          0.7016
+        ],
+        "iou": 0.00103
+      }
+    },
+    {
+      "category_viewpoint_count_distribution_position": {
+        "category_distribution_summary": {
+          "max": 5589,
+          "mean": 164.94541361845808,
+          "median": 129.0,
+          "min": 1,
+          "p05": 15.800000000000011,
+          "p95": 386.39999999999964,
+          "q1": 70.0,
+          "q3": 213.0
+        },
+        "is_category_minimum": true,
+        "num_goals_in_category": 1777,
+        "num_goals_in_category_with_exactly_one_viewpoint": 13,
+        "percentile_leq_this_count": 0.007315700619020821,
+        "plain_english_position": "bottom 13/1777 goals in category by viewpoint count",
+        "share_of_category_goals_with_exactly_one_viewpoint": 0.007315700619020821,
+        "viewpoint_count": 1
+      },
+      "episodes_whose_target_set_contains_this_goal": 166,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\104862687_172226883.json.gz",
+      "goal_index": 4,
+      "goal_position": [
+        -0.7217,
+        1.06228,
+        0.05738
+      ],
+      "goals_key": "104862687_172226883_potted_plant",
+      "object_category": "potted_plant",
+      "object_id": 34,
+      "object_name": "34170a3abede075d1e15942197394d95ee063bf7_:0000",
+      "object_name_id": null,
+      "scene_id": "104862687_172226883",
+      "split": "train",
+      "viewpoint": {
+        "agent_state.position": [
+          -1.70075,
+          0.19477,
+          -0.91094
+        ],
+        "agent_state.rotation": [
+          0.0,
+          -0.92282,
+          0.0,
+          0.38523
+        ],
+        "iou": 0.1448
+      }
+    },
+    {
+      "category_viewpoint_count_distribution_position": {
+        "category_distribution_summary": {
+          "max": 5589,
+          "mean": 164.94541361845808,
+          "median": 129.0,
+          "min": 1,
+          "p05": 15.800000000000011,
+          "p95": 386.39999999999964,
+          "q1": 70.0,
+          "q3": 213.0
+        },
+        "is_category_minimum": true,
+        "num_goals_in_category": 1777,
+        "num_goals_in_category_with_exactly_one_viewpoint": 13,
+        "percentile_leq_this_count": 0.007315700619020821,
+        "plain_english_position": "bottom 13/1777 goals in category by viewpoint count",
+        "share_of_category_goals_with_exactly_one_viewpoint": 0.007315700619020821,
+        "viewpoint_count": 1
+      },
+      "episodes_whose_target_set_contains_this_goal": 5,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\val\\content\\106878915_174887025.json.gz",
+      "goal_index": 19,
+      "goal_position": [
+        -2.40237,
+        1.83841,
+        -1.30953
+      ],
+      "goals_key": "106878915_174887025_potted_plant",
+      "object_category": "potted_plant",
+      "object_id": 166,
+      "object_name": "b827ad39b820d4908a4222dc95dd4b63ecf6c0a6_part_2_:0001",
+      "object_name_id": null,
+      "scene_id": "106878915_174887025",
+      "split": "val",
+      "viewpoint": {
+        "agent_state.position": [
+          -3.4789,
+          0.19388,
+          -1.27182
+        ],
+        "agent_state.rotation": [
+          0.0,
+          -0.69462,
+          0.0,
+          0.71938
+        ],
+        "iou": 0.00115
+      }
+    },
+    {
+      "category_viewpoint_count_distribution_position": {
+        "category_distribution_summary": {
+          "max": 5589,
+          "mean": 164.94541361845808,
+          "median": 129.0,
+          "min": 1,
+          "p05": 15.800000000000011,
+          "p95": 386.39999999999964,
+          "q1": 70.0,
+          "q3": 213.0
+        },
+        "is_category_minimum": true,
+        "num_goals_in_category": 1777,
+        "num_goals_in_category_with_exactly_one_viewpoint": 13,
+        "percentile_leq_this_count": 0.007315700619020821,
+        "plain_english_position": "bottom 13/1777 goals in category by viewpoint count",
+        "share_of_category_goals_with_exactly_one_viewpoint": 0.007315700619020821,
+        "viewpoint_count": 1
+      },
+      "episodes_whose_target_set_contains_this_goal": 200,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\107734227_176000091.json.gz",
+      "goal_index": 12,
+      "goal_position": [
+        4.50463,
+        0.90926,
+        -0.63487
+      ],
+      "goals_key": "107734227_176000091_potted_plant",
+      "object_category": "potted_plant",
+      "object_id": 130,
+      "object_name": "9eccc1dea9b821181517b1bbea57d70c6fad51af_:0000",
+      "object_name_id": null,
+      "scene_id": "107734227_176000091",
+      "split": "train",
+      "viewpoint": {
+        "agent_state.position": [
+          3.32956,
+          0.16061,
+          -1.23419
+        ],
+        "agent_state.rotation": [
+          0.0,
+          -0.85275,
+          0.0,
+          0.52233
+        ],
+        "iou": 0.09069
+      }
+    },
+    {
+      "category_viewpoint_count_distribution_position": {
+        "category_distribution_summary": {
+          "max": 5589,
+          "mean": 164.94541361845808,
+          "median": 129.0,
+          "min": 1,
+          "p05": 15.800000000000011,
+          "p95": 386.39999999999964,
+          "q1": 70.0,
+          "q3": 213.0
+        },
+        "is_category_minimum": true,
+        "num_goals_in_category": 1777,
+        "num_goals_in_category_with_exactly_one_viewpoint": 13,
+        "percentile_leq_this_count": 0.007315700619020821,
+        "plain_english_position": "bottom 13/1777 goals in category by viewpoint count",
+        "share_of_category_goals_with_exactly_one_viewpoint": 0.007315700619020821,
+        "viewpoint_count": 1
+      },
+      "episodes_whose_target_set_contains_this_goal": 166,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\108294798_176710428.json.gz",
+      "goal_index": 16,
+      "goal_position": [
+        -10.81291,
+        1.0194,
+        -3.78635
+      ],
+      "goals_key": "108294798_176710428_potted_plant",
+      "object_category": "potted_plant",
+      "object_id": 125,
+      "object_name": "dd7020ee1b0faeca3b3295e6abc9f3fa4a1a1d13_:0006",
+      "object_name_id": null,
+      "scene_id": "108294798_176710428",
+      "split": "train",
+      "viewpoint": {
+        "agent_state.position": [
+          -10.11291,
+          0.1847,
+          -4.63136
+        ],
+        "agent_state.rotation": [
+          0.0,
+          0.94077,
+          0.0,
+          0.33905
+        ],
+        "iou": 0.02319
+      }
+    },
+    {
+      "category_viewpoint_count_distribution_position": {
+        "category_distribution_summary": {
+          "max": 5589,
+          "mean": 164.94541361845808,
+          "median": 129.0,
+          "min": 1,
+          "p05": 15.800000000000011,
+          "p95": 386.39999999999964,
+          "q1": 70.0,
+          "q3": 213.0
+        },
+        "is_category_minimum": true,
+        "num_goals_in_category": 1777,
+        "num_goals_in_category_with_exactly_one_viewpoint": 13,
+        "percentile_leq_this_count": 0.007315700619020821,
+        "plain_english_position": "bottom 13/1777 goals in category by viewpoint count",
+        "share_of_category_goals_with_exactly_one_viewpoint": 0.007315700619020821,
+        "viewpoint_count": 1
+      },
+      "episodes_whose_target_set_contains_this_goal": 166,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\108294798_176710428.json.gz",
+      "goal_index": 1,
+      "goal_position": [
+        -5.70017,
+        1.56,
+        -3.23232
+      ],
+      "goals_key": "108294798_176710428_potted_plant",
+      "object_category": "potted_plant",
+      "object_id": 96,
+      "object_name": "95603e700e54fdebbae7c3228ecd0f9a849424d3_:0000",
+      "object_name_id": null,
+      "scene_id": "108294798_176710428",
+      "split": "train",
+      "viewpoint": {
+        "agent_state.position": [
+          -6.33017,
+          0.1847,
+          -4.13232
+        ],
+        "agent_state.rotation": [
+          0.0,
+          -0.95374,
+          0.0,
+          0.30064
+        ],
+        "iou": 0.00118
+      }
+    },
+    {
+      "category_viewpoint_count_distribution_position": {
+        "category_distribution_summary": {
+          "max": 5589,
+          "mean": 164.94541361845808,
+          "median": 129.0,
+          "min": 1,
+          "p05": 15.800000000000011,
+          "p95": 386.39999999999964,
+          "q1": 70.0,
+          "q3": 213.0
+        },
+        "is_category_minimum": true,
+        "num_goals_in_category": 1777,
+        "num_goals_in_category_with_exactly_one_viewpoint": 13,
+        "percentile_leq_this_count": 0.007315700619020821,
+        "plain_english_position": "bottom 13/1777 goals in category by viewpoint count",
+        "share_of_category_goals_with_exactly_one_viewpoint": 0.007315700619020821,
+        "viewpoint_count": 1
+      },
+      "episodes_whose_target_set_contains_this_goal": 166,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\108294897_176710602.json.gz",
+      "goal_index": 1,
+      "goal_position": [
+        3.7563,
+        1.37869,
+        -1.08831
+      ],
+      "goals_key": "108294897_176710602_potted_plant",
+      "object_category": "potted_plant",
+      "object_id": 22,
+      "object_name": "1babc21347ad1d49accb8c6df726aa9f85bdde93_part_8_:0000",
+      "object_name_id": null,
+      "scene_id": "108294897_176710602",
+      "split": "train",
+      "viewpoint": {
+        "agent_state.position": [
+          3.66629,
+          0.08723,
+          -2.07672
+        ],
+        "agent_state.rotation": [
+          0.0,
+          -0.99897,
+          0.0,
+          0.04539
+        ],
+        "iou": 0.01762
+      }
+    },
+    {
+      "category_viewpoint_count_distribution_position": {
+        "category_distribution_summary": {
+          "max": 5589,
+          "mean": 164.94541361845808,
+          "median": 129.0,
+          "min": 1,
+          "p05": 15.800000000000011,
+          "p95": 386.39999999999964,
+          "q1": 70.0,
+          "q3": 213.0
+        },
+        "is_category_minimum": true,
+        "num_goals_in_category": 1777,
+        "num_goals_in_category_with_exactly_one_viewpoint": 13,
+        "percentile_leq_this_count": 0.007315700619020821,
+        "plain_english_position": "bottom 13/1777 goals in category by viewpoint count",
+        "share_of_category_goals_with_exactly_one_viewpoint": 0.007315700619020821,
+        "viewpoint_count": 1
+      },
+      "episodes_whose_target_set_contains_this_goal": 166,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\108736656_177263304.json.gz",
+      "goal_index": 0,
+      "goal_position": [
+        -6.2313,
+        1.75,
+        -4.27467
+      ],
+      "goals_key": "108736656_177263304_potted_plant",
+      "object_category": "potted_plant",
+      "object_id": 200,
+      "object_name": "09b1df19e95ab47e50c8aac06137ef2f51144d34_:0000",
+      "object_name_id": null,
+      "scene_id": "108736656_177263304",
+      "split": "train",
+      "viewpoint": {
+        "agent_state.position": [
+          -5.55097,
+          0.09,
+          -5.21933
+        ],
+        "agent_state.rotation": [
+          0.0,
+          0.9517,
+          0.0,
+          0.30703
+        ],
+        "iou": 0.03212
+      }
+    },
+    {
+      "category_viewpoint_count_distribution_position": {
+        "category_distribution_summary": {
+          "max": 5589,
+          "mean": 164.94541361845808,
+          "median": 129.0,
+          "min": 1,
+          "p05": 15.800000000000011,
+          "p95": 386.39999999999964,
+          "q1": 70.0,
+          "q3": 213.0
+        },
+        "is_category_minimum": true,
+        "num_goals_in_category": 1777,
+        "num_goals_in_category_with_exactly_one_viewpoint": 13,
+        "percentile_leq_this_count": 0.007315700619020821,
+        "plain_english_position": "bottom 13/1777 goals in category by viewpoint count",
+        "share_of_category_goals_with_exactly_one_viewpoint": 0.007315700619020821,
+        "viewpoint_count": 1
+      },
+      "episodes_whose_target_set_contains_this_goal": 5,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\val\\content\\108736800_177263517.json.gz",
+      "goal_index": 1,
+      "goal_position": [
+        2.39459,
+        0.8096,
+        -1.45107
+      ],
+      "goals_key": "108736800_177263517_potted_plant",
+      "object_category": "potted_plant",
+      "object_id": 175,
+      "object_name": "054a4edb60cf2145e98274ad3fcbfc212e6e2445_:0001",
+      "object_name_id": null,
+      "scene_id": "108736800_177263517",
+      "split": "val",
+      "viewpoint": {
+        "agent_state.position": [
+          1.90205,
+          0.19356,
+          -2.47046
+        ],
+        "agent_state.rotation": [
+          0.0,
+          -0.97478,
+          0.0,
+          0.22315
+        ],
+        "iou": 0.00767
+      }
+    }
+  ],
+  "totals": {
+    "episodes": 121800,
+    "episodes_whose_target_set_contains_at_least_one_one_viewpoint_goal": 2698,
+    "files": 164,
+    "goals": 5504,
+    "one_viewpoint_unique_goals": 17,
+    "view_points": 1317069
+  }
+}

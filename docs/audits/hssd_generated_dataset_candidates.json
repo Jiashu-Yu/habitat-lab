@@ -1,0 +1,2835 @@
+{
+  "candidates": [
+    {
+      "contains_category_map": true,
+      "contains_episodes": true,
+      "contains_goals_by_category": true,
+      "differs_from_native_hssd_path": true,
+      "episode_categories": {
+        "bed": 20300,
+        "chair": 23445,
+        "couch": 22362,
+        "potted_plant": 22386,
+        "toilet": 14157,
+        "tv": 19150
+      },
+      "episodes_count": 121800,
+      "files": 164,
+      "files_with_episodes": 164,
+      "files_with_goals_by_category": 164,
+      "goal_categories": {
+        "bed": 418,
+        "chair": 2361,
+        "couch": 417,
+        "potted_plant": 1777,
+        "toilet": 241,
+        "tv": 290
+      },
+      "goals_count": 5504,
+      "hssd_category_overlap": [
+        "bed",
+        "chair",
+        "couch",
+        "potted_plant",
+        "toilet",
+        "tv"
+      ],
+      "hssd_objectnav_like_files": 164,
+      "is_native_hssd_path": false,
+      "looks_generated_or_modified_by_path_hint": true,
+      "looks_like_hssd_objectnav_dataset": true,
+      "malformed_like_categories": [],
+      "objectnav_like_files": 164,
+      "path": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v1",
+      "path_hints": [
+        "tilt"
+      ],
+      "resolved_path": "D:\\datasets\\hssd\\datasets\\objectnav\\hssd-hab-tiltfree-v1",
+      "sample_files": [
+        {
+          "episode_categories_sampled": {
+            "bed": 200,
+            "chair": 200,
+            "couch": 200,
+            "potted_plant": 200,
+            "tv": 200
+          },
+          "episodes_count": 1000,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v1\\train\\content\\102344022.json.gz",
+          "goal_categories": {
+            "bed": 2,
+            "chair": 20,
+            "couch": 4,
+            "potted_plant": 17,
+            "tv": 2
+          },
+          "goals_count": 45,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "train",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 4908
+        },
+        {
+          "episode_categories_sampled": {
+            "bed": 166,
+            "chair": 166,
+            "couch": 166,
+            "potted_plant": 166,
+            "toilet": 166,
+            "tv": 166
+          },
+          "episodes_count": 996,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v1\\train\\content\\102344049.json.gz",
+          "goal_categories": {
+            "bed": 3,
+            "chair": 8,
+            "couch": 2,
+            "potted_plant": 6,
+            "toilet": 3,
+            "tv": 3
+          },
+          "goals_count": 25,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "toilet",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "train",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 2602
+        },
+        {
+          "episode_categories_sampled": {
+            "bed": 166,
+            "chair": 166,
+            "couch": 166,
+            "potted_plant": 166,
+            "toilet": 166,
+            "tv": 166
+          },
+          "episodes_count": 996,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v1\\train\\content\\102344115.json.gz",
+          "goal_categories": {
+            "bed": 1,
+            "chair": 2,
+            "couch": 1,
+            "potted_plant": 7,
+            "toilet": 1,
+            "tv": 1
+          },
+          "goals_count": 13,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "toilet",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "train",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 1309
+        },
+        {
+          "episode_categories_sampled": {
+            "bed": 166,
+            "chair": 166,
+            "couch": 166,
+            "potted_plant": 166,
+            "toilet": 166,
+            "tv": 166
+          },
+          "episodes_count": 996,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v1\\train\\content\\102344193.json.gz",
+          "goal_categories": {
+            "bed": 1,
+            "chair": 9,
+            "couch": 1,
+            "potted_plant": 5,
+            "toilet": 1,
+            "tv": 1
+          },
+          "goals_count": 18,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "toilet",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "train",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 2067
+        },
+        {
+          "episode_categories_sampled": {
+            "bed": 166,
+            "chair": 166,
+            "couch": 166,
+            "potted_plant": 166,
+            "toilet": 166,
+            "tv": 166
+          },
+          "episodes_count": 996,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v1\\train\\content\\102344250.json.gz",
+          "goal_categories": {
+            "bed": 4,
+            "chair": 17,
+            "couch": 3,
+            "potted_plant": 9,
+            "toilet": 4,
+            "tv": 1
+          },
+          "goals_count": 38,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "toilet",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "train",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 4656
+        },
+        {
+          "episode_categories_sampled": {
+            "bed": 200,
+            "chair": 200,
+            "couch": 200,
+            "potted_plant": 200,
+            "tv": 200
+          },
+          "episodes_count": 1000,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v1\\train\\content\\102344280.json.gz",
+          "goal_categories": {
+            "bed": 3,
+            "chair": 11,
+            "couch": 1,
+            "potted_plant": 5,
+            "tv": 2
+          },
+          "goals_count": 22,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "train",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 2537
+        },
+        {
+          "episode_categories_sampled": {
+            "bed": 166,
+            "chair": 166,
+            "couch": 166,
+            "potted_plant": 166,
+            "toilet": 166,
+            "tv": 166
+          },
+          "episodes_count": 996,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v1\\train\\content\\102344307.json.gz",
+          "goal_categories": {
+            "bed": 2,
+            "chair": 13,
+            "couch": 3,
+            "potted_plant": 6,
+            "toilet": 1,
+            "tv": 3
+          },
+          "goals_count": 28,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "toilet",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "train",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 2800
+        },
+        {
+          "episode_categories_sampled": {
+            "bed": 200,
+            "chair": 200,
+            "couch": 200,
+            "potted_plant": 200,
+            "toilet": 200
+          },
+          "episodes_count": 1000,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v1\\train\\content\\102344328.json.gz",
+          "goal_categories": {
+            "bed": 3,
+            "chair": 10,
+            "couch": 1,
+            "potted_plant": 9,
+            "toilet": 3
+          },
+          "goals_count": 26,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "toilet"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "train",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 3153
+        }
+      ],
+      "splits": {
+        "train": 122,
+        "val": 42
+      },
+      "viewpoints_count": 600956
+    },
+    {
+      "contains_category_map": true,
+      "contains_episodes": true,
+      "contains_goals_by_category": true,
+      "differs_from_native_hssd_path": true,
+      "episode_categories": {
+        "bed": 224,
+        "chair": 237,
+        "couch": 237,
+        "potted_plant": 211,
+        "toilet": 148,
+        "tv": 191
+      },
+      "episodes_count": 1248,
+      "files": 42,
+      "files_with_episodes": 42,
+      "files_with_goals_by_category": 42,
+      "goal_categories": {
+        "bed": 136,
+        "chair": 680,
+        "couch": 134,
+        "potted_plant": 644,
+        "toilet": 60,
+        "tv": 69
+      },
+      "goals_count": 1723,
+      "hssd_category_overlap": [
+        "bed",
+        "chair",
+        "couch",
+        "potted_plant",
+        "toilet",
+        "tv"
+      ],
+      "hssd_objectnav_like_files": 42,
+      "is_native_hssd_path": false,
+      "looks_generated_or_modified_by_path_hint": true,
+      "looks_like_hssd_objectnav_dataset": true,
+      "malformed_like_categories": [],
+      "objectnav_like_files": 42,
+      "path": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v1-smoke",
+      "path_hints": [
+        "tilt"
+      ],
+      "resolved_path": "D:\\datasets\\hssd\\datasets\\objectnav\\hssd-hab-tiltfree-v1-smoke",
+      "sample_files": [
+        {
+          "episode_categories_sampled": {
+            "bed": 5,
+            "chair": 5,
+            "couch": 5,
+            "potted_plant": 5,
+            "toilet": 5,
+            "tv": 5
+          },
+          "episodes_count": 30,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v1-smoke\\val\\content\\102343992.json.gz",
+          "goal_categories": {
+            "bed": 4,
+            "chair": 23,
+            "couch": 4,
+            "potted_plant": 11,
+            "toilet": 3,
+            "tv": 3
+          },
+          "goals_count": 48,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "toilet",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "val",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 5891
+        },
+        {
+          "episode_categories_sampled": {
+            "bed": 5,
+            "chair": 5,
+            "couch": 5,
+            "potted_plant": 5,
+            "toilet": 5,
+            "tv": 5
+          },
+          "episodes_count": 30,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v1-smoke\\val\\content\\102344094.json.gz",
+          "goal_categories": {
+            "bed": 1,
+            "chair": 6,
+            "couch": 1,
+            "potted_plant": 10,
+            "toilet": 1,
+            "tv": 2
+          },
+          "goals_count": 21,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "toilet",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "val",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 2083
+        },
+        {
+          "episode_categories_sampled": {
+            "chair": 6,
+            "couch": 6,
+            "potted_plant": 6,
+            "toilet": 6,
+            "tv": 6
+          },
+          "episodes_count": 30,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v1-smoke\\val\\content\\102344529.json.gz",
+          "goal_categories": {
+            "chair": 17,
+            "couch": 2,
+            "potted_plant": 26,
+            "toilet": 1,
+            "tv": 2
+          },
+          "goals_count": 48,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "chair",
+            "couch",
+            "potted_plant",
+            "toilet",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "val",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 4781
+        },
+        {
+          "episode_categories_sampled": {
+            "bed": 5,
+            "chair": 5,
+            "couch": 5,
+            "potted_plant": 5,
+            "toilet": 5,
+            "tv": 5
+          },
+          "episodes_count": 30,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v1-smoke\\val\\content\\102815835.json.gz",
+          "goal_categories": {
+            "bed": 1,
+            "chair": 17,
+            "couch": 3,
+            "potted_plant": 8,
+            "toilet": 2,
+            "tv": 1
+          },
+          "goals_count": 32,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "toilet",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "val",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 3558
+        },
+        {
+          "episode_categories_sampled": {
+            "bed": 5,
+            "chair": 5,
+            "couch": 5,
+            "potted_plant": 5,
+            "toilet": 5,
+            "tv": 5
+          },
+          "episodes_count": 30,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v1-smoke\\val\\content\\102816036.json.gz",
+          "goal_categories": {
+            "bed": 5,
+            "chair": 47,
+            "couch": 12,
+            "potted_plant": 23,
+            "toilet": 5,
+            "tv": 8
+          },
+          "goals_count": 100,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "toilet",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "val",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 9519
+        },
+        {
+          "episode_categories_sampled": {
+            "bed": 7,
+            "chair": 7,
+            "couch": 7,
+            "toilet": 7
+          },
+          "episodes_count": 28,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v1-smoke\\val\\content\\102816114.json.gz",
+          "goal_categories": {
+            "bed": 2,
+            "chair": 16,
+            "couch": 2,
+            "toilet": 2
+          },
+          "goals_count": 22,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "toilet"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "val",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 2673
+        },
+        {
+          "episode_categories_sampled": {
+            "bed": 5,
+            "chair": 5,
+            "couch": 5,
+            "potted_plant": 5,
+            "toilet": 5,
+            "tv": 5
+          },
+          "episodes_count": 30,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v1-smoke\\val\\content\\102816600.json.gz",
+          "goal_categories": {
+            "bed": 6,
+            "chair": 27,
+            "couch": 7,
+            "potted_plant": 32,
+            "toilet": 3,
+            "tv": 1
+          },
+          "goals_count": 76,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "toilet",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "val",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 8907
+        },
+        {
+          "episode_categories_sampled": {
+            "bed": 5,
+            "chair": 5,
+            "couch": 5,
+            "potted_plant": 5,
+            "toilet": 5,
+            "tv": 5
+          },
+          "episodes_count": 30,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v1-smoke\\val\\content\\102816756.json.gz",
+          "goal_categories": {
+            "bed": 4,
+            "chair": 25,
+            "couch": 4,
+            "potted_plant": 34,
+            "toilet": 2,
+            "tv": 1
+          },
+          "goals_count": 70,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "toilet",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "val",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 8282
+        }
+      ],
+      "splits": {
+        "val": 42
+      },
+      "viewpoints_count": 190241
+    },
+    {
+      "contains_category_map": true,
+      "contains_episodes": true,
+      "contains_goals_by_category": true,
+      "differs_from_native_hssd_path": true,
+      "episode_categories": {
+        "bed": 200,
+        "chair": 200,
+        "couch": 200,
+        "potted_plant": 200,
+        "tv": 200
+      },
+      "episodes_count": 1000,
+      "files": 1,
+      "files_with_episodes": 1,
+      "files_with_goals_by_category": 1,
+      "goal_categories": {
+        "bed": 2,
+        "chair": 20,
+        "couch": 4,
+        "potted_plant": 17,
+        "tv": 2
+      },
+      "goals_count": 45,
+      "hssd_category_overlap": [
+        "bed",
+        "chair",
+        "couch",
+        "potted_plant",
+        "tv"
+      ],
+      "hssd_objectnav_like_files": 1,
+      "is_native_hssd_path": false,
+      "looks_generated_or_modified_by_path_hint": true,
+      "looks_like_hssd_objectnav_dataset": true,
+      "malformed_like_categories": [],
+      "objectnav_like_files": 1,
+      "path": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v2-debug",
+      "path_hints": [
+        "tilt"
+      ],
+      "resolved_path": "D:\\datasets\\hssd\\datasets\\objectnav\\hssd-hab-tiltfree-v2-debug",
+      "sample_files": [
+        {
+          "episode_categories_sampled": {
+            "bed": 200,
+            "chair": 200,
+            "couch": 200,
+            "potted_plant": 200,
+            "tv": 200
+          },
+          "episodes_count": 1000,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v2-debug\\train\\content\\102344022.json.gz",
+          "goal_categories": {
+            "bed": 2,
+            "chair": 20,
+            "couch": 4,
+            "potted_plant": 17,
+            "tv": 2
+          },
+          "goals_count": 45,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "train",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 9790
+        }
+      ],
+      "splits": {
+        "train": 1
+      },
+      "viewpoints_count": 9790
+    },
+    {
+      "contains_category_map": true,
+      "contains_episodes": true,
+      "contains_goals_by_category": true,
+      "differs_from_native_hssd_path": true,
+      "episode_categories": {
+        "bed": 200,
+        "chair": 200,
+        "couch": 200,
+        "potted_plant": 200,
+        "tv": 200
+      },
+      "episodes_count": 1000,
+      "files": 1,
+      "files_with_episodes": 1,
+      "files_with_goals_by_category": 1,
+      "goal_categories": {
+        "bed": 2,
+        "chair": 20,
+        "couch": 4,
+        "potted_plant": 17,
+        "tv": 2
+      },
+      "goals_count": 45,
+      "hssd_category_overlap": [
+        "bed",
+        "chair",
+        "couch",
+        "potted_plant",
+        "tv"
+      ],
+      "hssd_objectnav_like_files": 1,
+      "is_native_hssd_path": false,
+      "looks_generated_or_modified_by_path_hint": true,
+      "looks_like_hssd_objectnav_dataset": true,
+      "malformed_like_categories": [],
+      "objectnav_like_files": 1,
+      "path": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v2-debug2",
+      "path_hints": [
+        "tilt"
+      ],
+      "resolved_path": "D:\\datasets\\hssd\\datasets\\objectnav\\hssd-hab-tiltfree-v2-debug2",
+      "sample_files": [
+        {
+          "episode_categories_sampled": {
+            "bed": 200,
+            "chair": 200,
+            "couch": 200,
+            "potted_plant": 200,
+            "tv": 200
+          },
+          "episodes_count": 1000,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v2-debug2\\train\\content\\102344022.json.gz",
+          "goal_categories": {
+            "bed": 2,
+            "chair": 20,
+            "couch": 4,
+            "potted_plant": 17,
+            "tv": 2
+          },
+          "goals_count": 45,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "train",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 9790
+        }
+      ],
+      "splits": {
+        "train": 1
+      },
+      "viewpoints_count": 9790
+    },
+    {
+      "contains_category_map": true,
+      "contains_episodes": true,
+      "contains_goals_by_category": true,
+      "differs_from_native_hssd_path": true,
+      "episode_categories": {
+        "bed": 200,
+        "chair": 200,
+        "couch": 200,
+        "potted_plant": 200,
+        "tv": 200
+      },
+      "episodes_count": 1000,
+      "files": 1,
+      "files_with_episodes": 1,
+      "files_with_goals_by_category": 1,
+      "goal_categories": {
+        "bed": 2,
+        "chair": 20,
+        "couch": 4,
+        "potted_plant": 17,
+        "tv": 2
+      },
+      "goals_count": 45,
+      "hssd_category_overlap": [
+        "bed",
+        "chair",
+        "couch",
+        "potted_plant",
+        "tv"
+      ],
+      "hssd_objectnav_like_files": 1,
+      "is_native_hssd_path": false,
+      "looks_generated_or_modified_by_path_hint": true,
+      "looks_like_hssd_objectnav_dataset": true,
+      "malformed_like_categories": [],
+      "objectnav_like_files": 1,
+      "path": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v2-debug3",
+      "path_hints": [
+        "tilt"
+      ],
+      "resolved_path": "D:\\datasets\\hssd\\datasets\\objectnav\\hssd-hab-tiltfree-v2-debug3",
+      "sample_files": [
+        {
+          "episode_categories_sampled": {
+            "bed": 200,
+            "chair": 200,
+            "couch": 200,
+            "potted_plant": 200,
+            "tv": 200
+          },
+          "episodes_count": 1000,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v2-debug3\\train\\content\\102344022.json.gz",
+          "goal_categories": {
+            "bed": 2,
+            "chair": 20,
+            "couch": 4,
+            "potted_plant": 17,
+            "tv": 2
+          },
+          "goals_count": 45,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "train",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 9634
+        }
+      ],
+      "splits": {
+        "train": 1
+      },
+      "viewpoints_count": 9634
+    },
+    {
+      "contains_category_map": true,
+      "contains_episodes": true,
+      "contains_goals_by_category": true,
+      "differs_from_native_hssd_path": true,
+      "episode_categories": {
+        "bed": 200,
+        "chair": 200,
+        "couch": 200,
+        "potted_plant": 200,
+        "tv": 200
+      },
+      "episodes_count": 1000,
+      "files": 1,
+      "files_with_episodes": 1,
+      "files_with_goals_by_category": 1,
+      "goal_categories": {
+        "bed": 2,
+        "chair": 20,
+        "couch": 4,
+        "potted_plant": 17,
+        "tv": 2
+      },
+      "goals_count": 45,
+      "hssd_category_overlap": [
+        "bed",
+        "chair",
+        "couch",
+        "potted_plant",
+        "tv"
+      ],
+      "hssd_objectnav_like_files": 1,
+      "is_native_hssd_path": false,
+      "looks_generated_or_modified_by_path_hint": true,
+      "looks_like_hssd_objectnav_dataset": true,
+      "malformed_like_categories": [],
+      "objectnav_like_files": 1,
+      "path": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v2-debug4",
+      "path_hints": [
+        "tilt"
+      ],
+      "resolved_path": "D:\\datasets\\hssd\\datasets\\objectnav\\hssd-hab-tiltfree-v2-debug4",
+      "sample_files": [
+        {
+          "episode_categories_sampled": {
+            "bed": 200,
+            "chair": 200,
+            "couch": 200,
+            "potted_plant": 200,
+            "tv": 200
+          },
+          "episodes_count": 1000,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v2-debug4\\train\\content\\102344022.json.gz",
+          "goal_categories": {
+            "bed": 2,
+            "chair": 20,
+            "couch": 4,
+            "potted_plant": 17,
+            "tv": 2
+          },
+          "goals_count": 45,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "train",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 9608
+        }
+      ],
+      "splits": {
+        "train": 1
+      },
+      "viewpoints_count": 9608
+    },
+    {
+      "contains_category_map": true,
+      "contains_episodes": true,
+      "contains_goals_by_category": true,
+      "differs_from_native_hssd_path": true,
+      "episode_categories": {
+        "bed": 532,
+        "chair": 532,
+        "couch": 532,
+        "potted_plant": 532,
+        "toilet": 332,
+        "tv": 532
+      },
+      "episodes_count": 2992,
+      "files": 3,
+      "files_with_episodes": 3,
+      "files_with_goals_by_category": 3,
+      "goal_categories": {
+        "bed": 6,
+        "chair": 30,
+        "couch": 7,
+        "potted_plant": 30,
+        "toilet": 4,
+        "tv": 6
+      },
+      "goals_count": 83,
+      "hssd_category_overlap": [
+        "bed",
+        "chair",
+        "couch",
+        "potted_plant",
+        "toilet",
+        "tv"
+      ],
+      "hssd_objectnav_like_files": 3,
+      "is_native_hssd_path": false,
+      "looks_generated_or_modified_by_path_hint": true,
+      "looks_like_hssd_objectnav_dataset": true,
+      "malformed_like_categories": [],
+      "objectnav_like_files": 3,
+      "path": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v2-pilot",
+      "path_hints": [
+        "tilt"
+      ],
+      "resolved_path": "D:\\datasets\\hssd\\datasets\\objectnav\\hssd-hab-tiltfree-v2-pilot",
+      "sample_files": [
+        {
+          "episode_categories_sampled": {
+            "bed": 200,
+            "chair": 200,
+            "couch": 200,
+            "potted_plant": 200,
+            "tv": 200
+          },
+          "episodes_count": 1000,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v2-pilot\\train\\content\\102344022.json.gz",
+          "goal_categories": {
+            "bed": 2,
+            "chair": 20,
+            "couch": 4,
+            "potted_plant": 17,
+            "tv": 2
+          },
+          "goals_count": 45,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "train",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 7434
+        },
+        {
+          "episode_categories_sampled": {
+            "bed": 166,
+            "chair": 166,
+            "couch": 166,
+            "potted_plant": 166,
+            "toilet": 166,
+            "tv": 166
+          },
+          "episodes_count": 996,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v2-pilot\\train\\content\\102344049.json.gz",
+          "goal_categories": {
+            "bed": 3,
+            "chair": 8,
+            "couch": 2,
+            "potted_plant": 6,
+            "toilet": 3,
+            "tv": 3
+          },
+          "goals_count": 25,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "toilet",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "train",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 4104
+        },
+        {
+          "episode_categories_sampled": {
+            "bed": 166,
+            "chair": 166,
+            "couch": 166,
+            "potted_plant": 166,
+            "toilet": 166,
+            "tv": 166
+          },
+          "episodes_count": 996,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v2-pilot\\train\\content\\102344115.json.gz",
+          "goal_categories": {
+            "bed": 1,
+            "chair": 2,
+            "couch": 1,
+            "potted_plant": 7,
+            "toilet": 1,
+            "tv": 1
+          },
+          "goals_count": 13,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "toilet",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "train",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 1375
+        }
+      ],
+      "splits": {
+        "train": 3
+      },
+      "viewpoints_count": 12913
+    },
+    {
+      "contains_category_map": true,
+      "contains_episodes": true,
+      "contains_goals_by_category": true,
+      "differs_from_native_hssd_path": true,
+      "episode_categories": {
+        "bed": 5,
+        "chair": 5,
+        "couch": 5,
+        "potted_plant": 5,
+        "toilet": 5,
+        "tv": 5
+      },
+      "episodes_count": 30,
+      "files": 1,
+      "files_with_episodes": 1,
+      "files_with_goals_by_category": 1,
+      "goal_categories": {
+        "bed": 4,
+        "chair": 23,
+        "couch": 4,
+        "potted_plant": 11,
+        "toilet": 3,
+        "tv": 3
+      },
+      "goals_count": 48,
+      "hssd_category_overlap": [
+        "bed",
+        "chair",
+        "couch",
+        "potted_plant",
+        "toilet",
+        "tv"
+      ],
+      "hssd_objectnav_like_files": 1,
+      "is_native_hssd_path": false,
+      "looks_generated_or_modified_by_path_hint": true,
+      "looks_like_hssd_objectnav_dataset": true,
+      "malformed_like_categories": [],
+      "objectnav_like_files": 1,
+      "path": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v2-smoke",
+      "path_hints": [
+        "tilt"
+      ],
+      "resolved_path": "D:\\datasets\\hssd\\datasets\\objectnav\\hssd-hab-tiltfree-v2-smoke",
+      "sample_files": [
+        {
+          "episode_categories_sampled": {
+            "bed": 5,
+            "chair": 5,
+            "couch": 5,
+            "potted_plant": 5,
+            "toilet": 5,
+            "tv": 5
+          },
+          "episodes_count": 30,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v2-smoke\\val\\content\\102343992.json.gz",
+          "goal_categories": {
+            "bed": 4,
+            "chair": 23,
+            "couch": 4,
+            "potted_plant": 11,
+            "toilet": 3,
+            "tv": 3
+          },
+          "goals_count": 48,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "toilet",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "val",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 14696
+        }
+      ],
+      "splits": {
+        "val": 1
+      },
+      "viewpoints_count": 14696
+    },
+    {
+      "contains_category_map": true,
+      "contains_episodes": true,
+      "contains_goals_by_category": true,
+      "differs_from_native_hssd_path": true,
+      "episode_categories": {
+        "bed": 20300,
+        "chair": 23445,
+        "couch": 22362,
+        "potted_plant": 22386,
+        "toilet": 14157,
+        "tv": 19150
+      },
+      "episodes_count": 121800,
+      "files": 164,
+      "files_with_episodes": 164,
+      "files_with_goals_by_category": 164,
+      "goal_categories": {
+        "bed": 418,
+        "chair": 2361,
+        "couch": 417,
+        "potted_plant": 1777,
+        "toilet": 241,
+        "tv": 290
+      },
+      "goals_count": 5504,
+      "hssd_category_overlap": [
+        "bed",
+        "chair",
+        "couch",
+        "potted_plant",
+        "toilet",
+        "tv"
+      ],
+      "hssd_objectnav_like_files": 164,
+      "is_native_hssd_path": false,
+      "looks_generated_or_modified_by_path_hint": false,
+      "looks_like_hssd_objectnav_dataset": true,
+      "malformed_like_categories": [],
+      "objectnav_like_files": 164,
+      "path": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd_hab",
+      "path_hints": [],
+      "resolved_path": "D:\\datasets\\hssd\\datasets\\objectnav\\hssd_hab",
+      "sample_files": [
+        {
+          "episode_categories_sampled": {
+            "bed": 200,
+            "chair": 200,
+            "couch": 200,
+            "potted_plant": 200,
+            "tv": 200
+          },
+          "episodes_count": 1000,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd_hab\\train\\content\\102344022.json.gz",
+          "goal_categories": {
+            "bed": 2,
+            "chair": 20,
+            "couch": 4,
+            "potted_plant": 17,
+            "tv": 2
+          },
+          "goals_count": 45,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "train",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 9790
+        },
+        {
+          "episode_categories_sampled": {
+            "bed": 166,
+            "chair": 166,
+            "couch": 166,
+            "potted_plant": 166,
+            "toilet": 166,
+            "tv": 166
+          },
+          "episodes_count": 996,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd_hab\\train\\content\\102344049.json.gz",
+          "goal_categories": {
+            "bed": 3,
+            "chair": 8,
+            "couch": 2,
+            "potted_plant": 6,
+            "toilet": 3,
+            "tv": 3
+          },
+          "goals_count": 25,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "toilet",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "train",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 6282
+        },
+        {
+          "episode_categories_sampled": {
+            "bed": 166,
+            "chair": 166,
+            "couch": 166,
+            "potted_plant": 166,
+            "toilet": 166,
+            "tv": 166
+          },
+          "episodes_count": 996,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd_hab\\train\\content\\102344115.json.gz",
+          "goal_categories": {
+            "bed": 1,
+            "chair": 2,
+            "couch": 1,
+            "potted_plant": 7,
+            "toilet": 1,
+            "tv": 1
+          },
+          "goals_count": 13,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "toilet",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "train",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 1800
+        },
+        {
+          "episode_categories_sampled": {
+            "bed": 166,
+            "chair": 166,
+            "couch": 166,
+            "potted_plant": 166,
+            "toilet": 166,
+            "tv": 166
+          },
+          "episodes_count": 996,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd_hab\\train\\content\\102344193.json.gz",
+          "goal_categories": {
+            "bed": 1,
+            "chair": 9,
+            "couch": 1,
+            "potted_plant": 5,
+            "toilet": 1,
+            "tv": 1
+          },
+          "goals_count": 18,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "toilet",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "train",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 3909
+        },
+        {
+          "episode_categories_sampled": {
+            "bed": 166,
+            "chair": 166,
+            "couch": 166,
+            "potted_plant": 166,
+            "toilet": 166,
+            "tv": 166
+          },
+          "episodes_count": 996,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd_hab\\train\\content\\102344250.json.gz",
+          "goal_categories": {
+            "bed": 4,
+            "chair": 17,
+            "couch": 3,
+            "potted_plant": 9,
+            "toilet": 4,
+            "tv": 1
+          },
+          "goals_count": 38,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "toilet",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "train",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 10380
+        },
+        {
+          "episode_categories_sampled": {
+            "bed": 200,
+            "chair": 200,
+            "couch": 200,
+            "potted_plant": 200,
+            "tv": 200
+          },
+          "episodes_count": 1000,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd_hab\\train\\content\\102344280.json.gz",
+          "goal_categories": {
+            "bed": 3,
+            "chair": 11,
+            "couch": 1,
+            "potted_plant": 5,
+            "tv": 2
+          },
+          "goals_count": 22,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "train",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 6070
+        },
+        {
+          "episode_categories_sampled": {
+            "bed": 166,
+            "chair": 166,
+            "couch": 166,
+            "potted_plant": 166,
+            "toilet": 166,
+            "tv": 166
+          },
+          "episodes_count": 996,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd_hab\\train\\content\\102344307.json.gz",
+          "goal_categories": {
+            "bed": 2,
+            "chair": 13,
+            "couch": 3,
+            "potted_plant": 6,
+            "toilet": 1,
+            "tv": 3
+          },
+          "goals_count": 28,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "toilet",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "train",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 5818
+        },
+        {
+          "episode_categories_sampled": {
+            "bed": 200,
+            "chair": 200,
+            "couch": 200,
+            "potted_plant": 200,
+            "toilet": 200
+          },
+          "episodes_count": 1000,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd_hab\\train\\content\\102344328.json.gz",
+          "goal_categories": {
+            "bed": 3,
+            "chair": 10,
+            "couch": 1,
+            "potted_plant": 9,
+            "toilet": 3
+          },
+          "goals_count": 26,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "toilet"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "train",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 7972
+        }
+      ],
+      "splits": {
+        "train": 122,
+        "val": 42
+      },
+      "viewpoints_count": 1317069
+    },
+    {
+      "contains_category_map": true,
+      "contains_episodes": true,
+      "contains_goals_by_category": true,
+      "differs_from_native_hssd_path": false,
+      "episode_categories": {
+        "bed": 20300,
+        "chair": 23445,
+        "couch": 22362,
+        "potted_plant": 22386,
+        "toilet": 14157,
+        "tv": 19150
+      },
+      "episodes_count": 121800,
+      "files": 164,
+      "files_with_episodes": 164,
+      "files_with_goals_by_category": 164,
+      "goal_categories": {
+        "bed": 418,
+        "chair": 2361,
+        "couch": 417,
+        "potted_plant": 1777,
+        "toilet": 241,
+        "tv": 290
+      },
+      "goals_count": 5504,
+      "hssd_category_overlap": [
+        "bed",
+        "chair",
+        "couch",
+        "potted_plant",
+        "toilet",
+        "tv"
+      ],
+      "hssd_objectnav_like_files": 164,
+      "is_native_hssd_path": true,
+      "looks_generated_or_modified_by_path_hint": false,
+      "looks_like_hssd_objectnav_dataset": true,
+      "malformed_like_categories": [],
+      "objectnav_like_files": 164,
+      "path": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab",
+      "path_hints": [],
+      "resolved_path": "D:\\datasets\\hssd\\datasets\\objectnav\\hssd-hab",
+      "sample_files": [
+        {
+          "episode_categories_sampled": {
+            "bed": 200,
+            "chair": 200,
+            "couch": 200,
+            "potted_plant": 200,
+            "tv": 200
+          },
+          "episodes_count": 1000,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\102344022.json.gz",
+          "goal_categories": {
+            "bed": 2,
+            "chair": 20,
+            "couch": 4,
+            "potted_plant": 17,
+            "tv": 2
+          },
+          "goals_count": 45,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "train",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 9790
+        },
+        {
+          "episode_categories_sampled": {
+            "bed": 166,
+            "chair": 166,
+            "couch": 166,
+            "potted_plant": 166,
+            "toilet": 166,
+            "tv": 166
+          },
+          "episodes_count": 996,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\102344049.json.gz",
+          "goal_categories": {
+            "bed": 3,
+            "chair": 8,
+            "couch": 2,
+            "potted_plant": 6,
+            "toilet": 3,
+            "tv": 3
+          },
+          "goals_count": 25,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "toilet",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "train",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 6282
+        },
+        {
+          "episode_categories_sampled": {
+            "bed": 166,
+            "chair": 166,
+            "couch": 166,
+            "potted_plant": 166,
+            "toilet": 166,
+            "tv": 166
+          },
+          "episodes_count": 996,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\102344115.json.gz",
+          "goal_categories": {
+            "bed": 1,
+            "chair": 2,
+            "couch": 1,
+            "potted_plant": 7,
+            "toilet": 1,
+            "tv": 1
+          },
+          "goals_count": 13,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "toilet",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "train",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 1800
+        },
+        {
+          "episode_categories_sampled": {
+            "bed": 166,
+            "chair": 166,
+            "couch": 166,
+            "potted_plant": 166,
+            "toilet": 166,
+            "tv": 166
+          },
+          "episodes_count": 996,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\102344193.json.gz",
+          "goal_categories": {
+            "bed": 1,
+            "chair": 9,
+            "couch": 1,
+            "potted_plant": 5,
+            "toilet": 1,
+            "tv": 1
+          },
+          "goals_count": 18,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "toilet",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "train",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 3909
+        },
+        {
+          "episode_categories_sampled": {
+            "bed": 166,
+            "chair": 166,
+            "couch": 166,
+            "potted_plant": 166,
+            "toilet": 166,
+            "tv": 166
+          },
+          "episodes_count": 996,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\102344250.json.gz",
+          "goal_categories": {
+            "bed": 4,
+            "chair": 17,
+            "couch": 3,
+            "potted_plant": 9,
+            "toilet": 4,
+            "tv": 1
+          },
+          "goals_count": 38,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "toilet",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "train",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 10380
+        },
+        {
+          "episode_categories_sampled": {
+            "bed": 200,
+            "chair": 200,
+            "couch": 200,
+            "potted_plant": 200,
+            "tv": 200
+          },
+          "episodes_count": 1000,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\102344280.json.gz",
+          "goal_categories": {
+            "bed": 3,
+            "chair": 11,
+            "couch": 1,
+            "potted_plant": 5,
+            "tv": 2
+          },
+          "goals_count": 22,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "train",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 6070
+        },
+        {
+          "episode_categories_sampled": {
+            "bed": 166,
+            "chair": 166,
+            "couch": 166,
+            "potted_plant": 166,
+            "toilet": 166,
+            "tv": 166
+          },
+          "episodes_count": 996,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\102344307.json.gz",
+          "goal_categories": {
+            "bed": 2,
+            "chair": 13,
+            "couch": 3,
+            "potted_plant": 6,
+            "toilet": 1,
+            "tv": 3
+          },
+          "goals_count": 28,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "toilet",
+            "tv"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "train",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 5818
+        },
+        {
+          "episode_categories_sampled": {
+            "bed": 200,
+            "chair": 200,
+            "couch": 200,
+            "potted_plant": 200,
+            "toilet": 200
+          },
+          "episodes_count": 1000,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\102344328.json.gz",
+          "goal_categories": {
+            "bed": 3,
+            "chair": 10,
+            "couch": 1,
+            "potted_plant": 9,
+            "toilet": 3
+          },
+          "goals_count": 26,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": true,
+          "hssd_category_overlap": [
+            "bed",
+            "chair",
+            "couch",
+            "potted_plant",
+            "toilet"
+          ],
+          "hssd_objectnav_like": true,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": true,
+          "split": "train",
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes",
+            "goals_by_category"
+          ],
+          "viewpoints_count": 7972
+        }
+      ],
+      "splits": {
+        "train": 122,
+        "val": 42
+      },
+      "viewpoints_count": 1317069
+    },
+    {
+      "contains_category_map": true,
+      "contains_episodes": true,
+      "contains_goals_by_category": false,
+      "differs_from_native_hssd_path": true,
+      "episode_categories": {},
+      "episodes_count": 0,
+      "files": 1,
+      "files_with_episodes": 1,
+      "files_with_goals_by_category": 0,
+      "goal_categories": {},
+      "goals_count": 0,
+      "hssd_category_overlap": [],
+      "hssd_objectnav_like_files": 0,
+      "is_native_hssd_path": false,
+      "looks_generated_or_modified_by_path_hint": true,
+      "looks_like_hssd_objectnav_dataset": false,
+      "malformed_like_categories": [],
+      "objectnav_like_files": 0,
+      "path": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v1-smoke\\val",
+      "path_hints": [
+        "tilt"
+      ],
+      "resolved_path": "D:\\datasets\\hssd\\datasets\\objectnav\\hssd-hab-tiltfree-v1-smoke\\val",
+      "sample_files": [
+        {
+          "episode_categories_sampled": {},
+          "episodes_count": 0,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v1-smoke\\val\\val.json.gz",
+          "goal_categories": {},
+          "goals_count": 0,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": false,
+          "hssd_category_overlap": [],
+          "hssd_objectnav_like": false,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": false,
+          "split": null,
+          "top_level_keys": [
+            "category_to_mp3d_category_id",
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes"
+          ],
+          "viewpoints_count": 0
+        }
+      ],
+      "splits": {},
+      "viewpoints_count": 0
+    },
+    {
+      "contains_category_map": true,
+      "contains_episodes": true,
+      "contains_goals_by_category": false,
+      "differs_from_native_hssd_path": true,
+      "episode_categories": {},
+      "episodes_count": 0,
+      "files": 1,
+      "files_with_episodes": 1,
+      "files_with_goals_by_category": 0,
+      "goal_categories": {},
+      "goals_count": 0,
+      "hssd_category_overlap": [],
+      "hssd_objectnav_like_files": 0,
+      "is_native_hssd_path": false,
+      "looks_generated_or_modified_by_path_hint": true,
+      "looks_like_hssd_objectnav_dataset": false,
+      "malformed_like_categories": [],
+      "objectnav_like_files": 0,
+      "path": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v1\\train",
+      "path_hints": [
+        "tilt"
+      ],
+      "resolved_path": "D:\\datasets\\hssd\\datasets\\objectnav\\hssd-hab-tiltfree-v1\\train",
+      "sample_files": [
+        {
+          "episode_categories_sampled": {},
+          "episodes_count": 0,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v1\\train\\train.json.gz",
+          "goal_categories": {},
+          "goals_count": 0,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": false,
+          "hssd_category_overlap": [],
+          "hssd_objectnav_like": false,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": false,
+          "split": null,
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes"
+          ],
+          "viewpoints_count": 0
+        }
+      ],
+      "splits": {},
+      "viewpoints_count": 0
+    },
+    {
+      "contains_category_map": true,
+      "contains_episodes": true,
+      "contains_goals_by_category": false,
+      "differs_from_native_hssd_path": true,
+      "episode_categories": {},
+      "episodes_count": 0,
+      "files": 1,
+      "files_with_episodes": 1,
+      "files_with_goals_by_category": 0,
+      "goal_categories": {},
+      "goals_count": 0,
+      "hssd_category_overlap": [],
+      "hssd_objectnav_like_files": 0,
+      "is_native_hssd_path": false,
+      "looks_generated_or_modified_by_path_hint": true,
+      "looks_like_hssd_objectnav_dataset": false,
+      "malformed_like_categories": [],
+      "objectnav_like_files": 0,
+      "path": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v1\\val",
+      "path_hints": [
+        "tilt"
+      ],
+      "resolved_path": "D:\\datasets\\hssd\\datasets\\objectnav\\hssd-hab-tiltfree-v1\\val",
+      "sample_files": [
+        {
+          "episode_categories_sampled": {},
+          "episodes_count": 0,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v1\\val\\val.json.gz",
+          "goal_categories": {},
+          "goals_count": 0,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": false,
+          "hssd_category_overlap": [],
+          "hssd_objectnav_like": false,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": false,
+          "split": null,
+          "top_level_keys": [
+            "category_to_mp3d_category_id",
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes"
+          ],
+          "viewpoints_count": 0
+        }
+      ],
+      "splits": {},
+      "viewpoints_count": 0
+    },
+    {
+      "contains_category_map": true,
+      "contains_episodes": true,
+      "contains_goals_by_category": false,
+      "differs_from_native_hssd_path": true,
+      "episode_categories": {},
+      "episodes_count": 0,
+      "files": 1,
+      "files_with_episodes": 1,
+      "files_with_goals_by_category": 0,
+      "goal_categories": {},
+      "goals_count": 0,
+      "hssd_category_overlap": [],
+      "hssd_objectnav_like_files": 0,
+      "is_native_hssd_path": false,
+      "looks_generated_or_modified_by_path_hint": true,
+      "looks_like_hssd_objectnav_dataset": false,
+      "malformed_like_categories": [],
+      "objectnav_like_files": 0,
+      "path": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v2-debug2\\train",
+      "path_hints": [
+        "tilt"
+      ],
+      "resolved_path": "D:\\datasets\\hssd\\datasets\\objectnav\\hssd-hab-tiltfree-v2-debug2\\train",
+      "sample_files": [
+        {
+          "episode_categories_sampled": {},
+          "episodes_count": 0,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v2-debug2\\train\\train.json.gz",
+          "goal_categories": {},
+          "goals_count": 0,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": false,
+          "hssd_category_overlap": [],
+          "hssd_objectnav_like": false,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": false,
+          "split": null,
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes"
+          ],
+          "viewpoints_count": 0
+        }
+      ],
+      "splits": {},
+      "viewpoints_count": 0
+    },
+    {
+      "contains_category_map": true,
+      "contains_episodes": true,
+      "contains_goals_by_category": false,
+      "differs_from_native_hssd_path": true,
+      "episode_categories": {},
+      "episodes_count": 0,
+      "files": 1,
+      "files_with_episodes": 1,
+      "files_with_goals_by_category": 0,
+      "goal_categories": {},
+      "goals_count": 0,
+      "hssd_category_overlap": [],
+      "hssd_objectnav_like_files": 0,
+      "is_native_hssd_path": false,
+      "looks_generated_or_modified_by_path_hint": true,
+      "looks_like_hssd_objectnav_dataset": false,
+      "malformed_like_categories": [],
+      "objectnav_like_files": 0,
+      "path": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v2-debug3\\train",
+      "path_hints": [
+        "tilt"
+      ],
+      "resolved_path": "D:\\datasets\\hssd\\datasets\\objectnav\\hssd-hab-tiltfree-v2-debug3\\train",
+      "sample_files": [
+        {
+          "episode_categories_sampled": {},
+          "episodes_count": 0,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v2-debug3\\train\\train.json.gz",
+          "goal_categories": {},
+          "goals_count": 0,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": false,
+          "hssd_category_overlap": [],
+          "hssd_objectnav_like": false,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": false,
+          "split": null,
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes"
+          ],
+          "viewpoints_count": 0
+        }
+      ],
+      "splits": {},
+      "viewpoints_count": 0
+    },
+    {
+      "contains_category_map": true,
+      "contains_episodes": true,
+      "contains_goals_by_category": false,
+      "differs_from_native_hssd_path": true,
+      "episode_categories": {},
+      "episodes_count": 0,
+      "files": 1,
+      "files_with_episodes": 1,
+      "files_with_goals_by_category": 0,
+      "goal_categories": {},
+      "goals_count": 0,
+      "hssd_category_overlap": [],
+      "hssd_objectnav_like_files": 0,
+      "is_native_hssd_path": false,
+      "looks_generated_or_modified_by_path_hint": true,
+      "looks_like_hssd_objectnav_dataset": false,
+      "malformed_like_categories": [],
+      "objectnav_like_files": 0,
+      "path": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v2-debug4\\train",
+      "path_hints": [
+        "tilt"
+      ],
+      "resolved_path": "D:\\datasets\\hssd\\datasets\\objectnav\\hssd-hab-tiltfree-v2-debug4\\train",
+      "sample_files": [
+        {
+          "episode_categories_sampled": {},
+          "episodes_count": 0,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v2-debug4\\train\\train.json.gz",
+          "goal_categories": {},
+          "goals_count": 0,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": false,
+          "hssd_category_overlap": [],
+          "hssd_objectnav_like": false,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": false,
+          "split": null,
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes"
+          ],
+          "viewpoints_count": 0
+        }
+      ],
+      "splits": {},
+      "viewpoints_count": 0
+    },
+    {
+      "contains_category_map": true,
+      "contains_episodes": true,
+      "contains_goals_by_category": false,
+      "differs_from_native_hssd_path": true,
+      "episode_categories": {},
+      "episodes_count": 0,
+      "files": 1,
+      "files_with_episodes": 1,
+      "files_with_goals_by_category": 0,
+      "goal_categories": {},
+      "goals_count": 0,
+      "hssd_category_overlap": [],
+      "hssd_objectnav_like_files": 0,
+      "is_native_hssd_path": false,
+      "looks_generated_or_modified_by_path_hint": true,
+      "looks_like_hssd_objectnav_dataset": false,
+      "malformed_like_categories": [],
+      "objectnav_like_files": 0,
+      "path": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v2-debug\\train",
+      "path_hints": [
+        "tilt"
+      ],
+      "resolved_path": "D:\\datasets\\hssd\\datasets\\objectnav\\hssd-hab-tiltfree-v2-debug\\train",
+      "sample_files": [
+        {
+          "episode_categories_sampled": {},
+          "episodes_count": 0,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v2-debug\\train\\train.json.gz",
+          "goal_categories": {},
+          "goals_count": 0,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": false,
+          "hssd_category_overlap": [],
+          "hssd_objectnav_like": false,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": false,
+          "split": null,
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes"
+          ],
+          "viewpoints_count": 0
+        }
+      ],
+      "splits": {},
+      "viewpoints_count": 0
+    },
+    {
+      "contains_category_map": true,
+      "contains_episodes": true,
+      "contains_goals_by_category": false,
+      "differs_from_native_hssd_path": true,
+      "episode_categories": {},
+      "episodes_count": 0,
+      "files": 1,
+      "files_with_episodes": 1,
+      "files_with_goals_by_category": 0,
+      "goal_categories": {},
+      "goals_count": 0,
+      "hssd_category_overlap": [],
+      "hssd_objectnav_like_files": 0,
+      "is_native_hssd_path": false,
+      "looks_generated_or_modified_by_path_hint": true,
+      "looks_like_hssd_objectnav_dataset": false,
+      "malformed_like_categories": [],
+      "objectnav_like_files": 0,
+      "path": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v2-pilot\\train",
+      "path_hints": [
+        "tilt"
+      ],
+      "resolved_path": "D:\\datasets\\hssd\\datasets\\objectnav\\hssd-hab-tiltfree-v2-pilot\\train",
+      "sample_files": [
+        {
+          "episode_categories_sampled": {},
+          "episodes_count": 0,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v2-pilot\\train\\train.json.gz",
+          "goal_categories": {},
+          "goals_count": 0,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": false,
+          "hssd_category_overlap": [],
+          "hssd_objectnav_like": false,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": false,
+          "split": null,
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes"
+          ],
+          "viewpoints_count": 0
+        }
+      ],
+      "splits": {},
+      "viewpoints_count": 0
+    },
+    {
+      "contains_category_map": true,
+      "contains_episodes": true,
+      "contains_goals_by_category": false,
+      "differs_from_native_hssd_path": true,
+      "episode_categories": {},
+      "episodes_count": 0,
+      "files": 1,
+      "files_with_episodes": 1,
+      "files_with_goals_by_category": 0,
+      "goal_categories": {},
+      "goals_count": 0,
+      "hssd_category_overlap": [],
+      "hssd_objectnav_like_files": 0,
+      "is_native_hssd_path": false,
+      "looks_generated_or_modified_by_path_hint": true,
+      "looks_like_hssd_objectnav_dataset": false,
+      "malformed_like_categories": [],
+      "objectnav_like_files": 0,
+      "path": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v2-smoke\\val",
+      "path_hints": [
+        "tilt"
+      ],
+      "resolved_path": "D:\\datasets\\hssd\\datasets\\objectnav\\hssd-hab-tiltfree-v2-smoke\\val",
+      "sample_files": [
+        {
+          "episode_categories_sampled": {},
+          "episodes_count": 0,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab-tiltfree-v2-smoke\\val\\val.json.gz",
+          "goal_categories": {},
+          "goals_count": 0,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": false,
+          "hssd_category_overlap": [],
+          "hssd_objectnav_like": false,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": false,
+          "split": null,
+          "top_level_keys": [
+            "category_to_mp3d_category_id",
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes"
+          ],
+          "viewpoints_count": 0
+        }
+      ],
+      "splits": {},
+      "viewpoints_count": 0
+    },
+    {
+      "contains_category_map": true,
+      "contains_episodes": true,
+      "contains_goals_by_category": false,
+      "differs_from_native_hssd_path": true,
+      "episode_categories": {},
+      "episodes_count": 0,
+      "files": 1,
+      "files_with_episodes": 1,
+      "files_with_goals_by_category": 0,
+      "goal_categories": {},
+      "goals_count": 0,
+      "hssd_category_overlap": [],
+      "hssd_objectnav_like_files": 0,
+      "is_native_hssd_path": false,
+      "looks_generated_or_modified_by_path_hint": false,
+      "looks_like_hssd_objectnav_dataset": false,
+      "malformed_like_categories": [],
+      "objectnav_like_files": 0,
+      "path": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train",
+      "path_hints": [],
+      "resolved_path": "D:\\datasets\\hssd\\datasets\\objectnav\\hssd-hab\\train",
+      "sample_files": [
+        {
+          "episode_categories_sampled": {},
+          "episodes_count": 0,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\train.json.gz",
+          "goal_categories": {},
+          "goals_count": 0,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": false,
+          "hssd_category_overlap": [],
+          "hssd_objectnav_like": false,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": false,
+          "split": null,
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes"
+          ],
+          "viewpoints_count": 0
+        }
+      ],
+      "splits": {},
+      "viewpoints_count": 0
+    },
+    {
+      "contains_category_map": true,
+      "contains_episodes": true,
+      "contains_goals_by_category": false,
+      "differs_from_native_hssd_path": true,
+      "episode_categories": {},
+      "episodes_count": 0,
+      "files": 1,
+      "files_with_episodes": 1,
+      "files_with_goals_by_category": 0,
+      "goal_categories": {},
+      "goals_count": 0,
+      "hssd_category_overlap": [],
+      "hssd_objectnav_like_files": 0,
+      "is_native_hssd_path": false,
+      "looks_generated_or_modified_by_path_hint": false,
+      "looks_like_hssd_objectnav_dataset": false,
+      "malformed_like_categories": [],
+      "objectnav_like_files": 0,
+      "path": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\val",
+      "path_hints": [],
+      "resolved_path": "D:\\datasets\\hssd\\datasets\\objectnav\\hssd-hab\\val",
+      "sample_files": [
+        {
+          "episode_categories_sampled": {},
+          "episodes_count": 0,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\val\\val.json.gz",
+          "goal_categories": {},
+          "goals_count": 0,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": false,
+          "hssd_category_overlap": [],
+          "hssd_objectnav_like": false,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": false,
+          "split": null,
+          "top_level_keys": [
+            "category_to_mp3d_category_id",
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes"
+          ],
+          "viewpoints_count": 0
+        }
+      ],
+      "splits": {},
+      "viewpoints_count": 0
+    },
+    {
+      "contains_category_map": true,
+      "contains_episodes": true,
+      "contains_goals_by_category": false,
+      "differs_from_native_hssd_path": true,
+      "episode_categories": {},
+      "episodes_count": 0,
+      "files": 1,
+      "files_with_episodes": 1,
+      "files_with_goals_by_category": 0,
+      "goal_categories": {},
+      "goals_count": 0,
+      "hssd_category_overlap": [],
+      "hssd_objectnav_like_files": 0,
+      "is_native_hssd_path": false,
+      "looks_generated_or_modified_by_path_hint": false,
+      "looks_like_hssd_objectnav_dataset": false,
+      "malformed_like_categories": [],
+      "objectnav_like_files": 0,
+      "path": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd_hab\\train",
+      "path_hints": [],
+      "resolved_path": "D:\\datasets\\hssd\\datasets\\objectnav\\hssd_hab\\train",
+      "sample_files": [
+        {
+          "episode_categories_sampled": {},
+          "episodes_count": 0,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd_hab\\train\\train.json.gz",
+          "goal_categories": {},
+          "goals_count": 0,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": false,
+          "hssd_category_overlap": [],
+          "hssd_objectnav_like": false,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": false,
+          "split": null,
+          "top_level_keys": [
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes"
+          ],
+          "viewpoints_count": 0
+        }
+      ],
+      "splits": {},
+      "viewpoints_count": 0
+    },
+    {
+      "contains_category_map": true,
+      "contains_episodes": true,
+      "contains_goals_by_category": false,
+      "differs_from_native_hssd_path": true,
+      "episode_categories": {},
+      "episodes_count": 0,
+      "files": 1,
+      "files_with_episodes": 1,
+      "files_with_goals_by_category": 0,
+      "goal_categories": {},
+      "goals_count": 0,
+      "hssd_category_overlap": [],
+      "hssd_objectnav_like_files": 0,
+      "is_native_hssd_path": false,
+      "looks_generated_or_modified_by_path_hint": false,
+      "looks_like_hssd_objectnav_dataset": false,
+      "malformed_like_categories": [],
+      "objectnav_like_files": 0,
+      "path": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd_hab\\val",
+      "path_hints": [],
+      "resolved_path": "D:\\datasets\\hssd\\datasets\\objectnav\\hssd_hab\\val",
+      "sample_files": [
+        {
+          "episode_categories_sampled": {},
+          "episodes_count": 0,
+          "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd_hab\\val\\val.json.gz",
+          "goal_categories": {},
+          "goals_count": 0,
+          "has_category_map": true,
+          "has_episodes": true,
+          "has_goals_by_category": false,
+          "hssd_category_overlap": [],
+          "hssd_objectnav_like": false,
+          "malformed_like_categories_sample": [],
+          "objectnav_like": false,
+          "split": null,
+          "top_level_keys": [
+            "category_to_mp3d_category_id",
+            "category_to_scene_annotation_category_id",
+            "category_to_task_category_id",
+            "episodes"
+          ],
+          "viewpoints_count": 0
+        }
+      ],
+      "splits": {},
+      "viewpoints_count": 0
+    }
+  ],
+  "clear_generated_dataset": null,
+  "dataset_like_files": 555,
+  "decision": "Multiple non-native HSSD/ObjectNav-like candidates found; do not auto-audit all.",
+  "method": "Static scan of JSON/JSON.GZ files for episodes/goals_by_category; audit outputs pruned.",
+  "native_hssd_root": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab",
+  "non_native_hssd_objectnav_candidate_count": 9,
+  "scan_root": ".",
+  "scanned_json_files": 19794
+}

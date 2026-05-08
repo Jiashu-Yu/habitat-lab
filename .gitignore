@@ -1,6 +1,7 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+*.pyc
 
 # C extensions
 *.so
@@ -25,6 +26,15 @@ var/
 
 # Hydra
 outputs/
+
+# HSSD audit/generated artifacts
+*_debug/
+*.png
+*.jpg
+*.jpeg
+*.mp4
+*.avi
+*.mov
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

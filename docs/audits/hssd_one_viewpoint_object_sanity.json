@@ -1,0 +1,1759 @@
+{
+  "detailed_goals": [
+    {
+      "episode_count_referencing_this_goal": 5,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\val\\content\\104862384_172226319.json.gz",
+      "goal_index": 6,
+      "goals_key": "104862384_172226319_chair",
+      "object_bounding_box": null,
+      "object_category": "chair",
+      "object_dimensions": null,
+      "object_handle": null,
+      "object_id": 123,
+      "object_metadata_missing_from_goal_schema": [
+        "object_semantic_id",
+        "semantic_id",
+        "object_template",
+        "object_template_handle",
+        "object_handle",
+        "handle",
+        "template_handle",
+        "object_type",
+        "category",
+        "bbox",
+        "bounding_box",
+        "aabb",
+        "dimensions",
+        "size",
+        "extent"
+      ],
+      "object_metadata_present": {},
+      "object_name": "f6b5bf924de25d8ca15fe6e233045025e21c2be6_:0000",
+      "object_name_id": null,
+      "object_position": [
+        -5.86212,
+        0.49523,
+        0.72276
+      ],
+      "object_position_y": 0.49523,
+      "object_position_y_percentile_within_category": 0.776536312849162,
+      "object_semantic_id": null,
+      "object_template": null,
+      "raw_goal_fields": [
+        "object_category",
+        "object_id",
+        "object_name",
+        "object_name_id",
+        "position",
+        "radius",
+        "room_id",
+        "room_name",
+        "view_points"
+      ],
+      "raw_goal_object_category": "chair",
+      "sanity_issues": [],
+      "sanity_notes": [
+        "object_name has no human-readable category hint; semantic label cannot be validated from name alone",
+        "no bbox/dimensions fields in goal schema"
+      ],
+      "scene_id": "104862384_172226319",
+      "single_viewpoint_agent_state_full": {
+        "position": [
+          -7.26336,
+          0.19176,
+          0.58908
+        ],
+        "rotation": [
+          0.0,
+          -0.73992,
+          0.0,
+          0.67269
+        ]
+      },
+      "single_viewpoint_full_record": {
+        "agent_state": {
+          "position": [
+            -7.26336,
+            0.19176,
+            0.58908
+          ],
+          "rotation": [
+            0.0,
+            -0.73992,
+            0.0,
+            0.67269
+          ]
+        },
+        "iou": 0.16145
+      },
+      "single_viewpoint_iou": 0.16145,
+      "single_viewpoint_position": [
+        -7.26336,
+        0.19176,
+        0.58908
+      ],
+      "single_viewpoint_rotation": [
+        0.0,
+        -0.73992,
+        0.0,
+        0.67269
+      ],
+      "split": "val"
+    },
+    {
+      "episode_count_referencing_this_goal": 333,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\105515151_173104068.json.gz",
+      "goal_index": 79,
+      "goals_key": "105515151_173104068_chair",
+      "object_bounding_box": null,
+      "object_category": "chair",
+      "object_dimensions": null,
+      "object_handle": null,
+      "object_id": 960,
+      "object_metadata_missing_from_goal_schema": [
+        "object_semantic_id",
+        "semantic_id",
+        "object_template",
+        "object_template_handle",
+        "object_handle",
+        "handle",
+        "template_handle",
+        "object_type",
+        "category",
+        "bbox",
+        "bounding_box",
+        "aabb",
+        "dimensions",
+        "size",
+        "extent"
+      ],
+      "object_metadata_present": {},
+      "object_name": "7df0dd6937e5576eb07c70edcd4d5f6c8d9f549f_part_3_:0000",
+      "object_name_id": null,
+      "object_position": [
+        16.96086,
+        0.48943,
+        -4.62649
+      ],
+      "object_position_y": 0.48943,
+      "object_position_y_percentile_within_category": 0.7430167597765364,
+      "object_semantic_id": null,
+      "object_template": null,
+      "raw_goal_fields": [
+        "object_category",
+        "object_id",
+        "object_name",
+        "object_name_id",
+        "position",
+        "radius",
+        "room_id",
+        "room_name",
+        "view_points"
+      ],
+      "raw_goal_object_category": "chair",
+      "sanity_issues": [],
+      "sanity_notes": [
+        "object_name has no human-readable category hint; semantic label cannot be validated from name alone",
+        "no bbox/dimensions fields in goal schema"
+      ],
+      "scene_id": "105515151_173104068",
+      "single_viewpoint_agent_state_full": {
+        "position": [
+          16.34279,
+          0.191,
+          -5.86612
+        ],
+        "rotation": [
+          0.0,
+          -0.97338,
+          0.0,
+          0.2292
+        ]
+      },
+      "single_viewpoint_full_record": {
+        "agent_state": {
+          "position": [
+            16.34279,
+            0.191,
+            -5.86612
+          ],
+          "rotation": [
+            0.0,
+            -0.97338,
+            0.0,
+            0.2292
+          ]
+        },
+        "iou": 0.00129
+      },
+      "single_viewpoint_iou": 0.00129,
+      "single_viewpoint_position": [
+        16.34279,
+        0.191,
+        -5.86612
+      ],
+      "single_viewpoint_rotation": [
+        0.0,
+        -0.97338,
+        0.0,
+        0.2292
+      ],
+      "split": "train"
+    },
+    {
+      "episode_count_referencing_this_goal": 333,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\108294846_176710506.json.gz",
+      "goal_index": 11,
+      "goals_key": "108294846_176710506_chair",
+      "object_bounding_box": null,
+      "object_category": "chair",
+      "object_dimensions": null,
+      "object_handle": null,
+      "object_id": 77,
+      "object_metadata_missing_from_goal_schema": [
+        "object_semantic_id",
+        "semantic_id",
+        "object_template",
+        "object_template_handle",
+        "object_handle",
+        "handle",
+        "template_handle",
+        "object_type",
+        "category",
+        "bbox",
+        "bounding_box",
+        "aabb",
+        "dimensions",
+        "size",
+        "extent"
+      ],
+      "object_metadata_present": {},
+      "object_name": "8a042c83502854ccd12ff65ca73cc273f8a1c7e5_part_1_:0007",
+      "object_name_id": null,
+      "object_position": [
+        -25.7485,
+        0.51187,
+        -3.34277
+      ],
+      "object_position_y": 0.51187,
+      "object_position_y_percentile_within_category": 0.9385474860335196,
+      "object_semantic_id": null,
+      "object_template": null,
+      "raw_goal_fields": [
+        "object_category",
+        "object_id",
+        "object_name",
+        "object_name_id",
+        "position",
+        "radius",
+        "room_id",
+        "room_name",
+        "view_points"
+      ],
+      "raw_goal_object_category": "chair",
+      "sanity_issues": [],
+      "sanity_notes": [
+        "object_name has no human-readable category hint; semantic label cannot be validated from name alone",
+        "no bbox/dimensions fields in goal schema"
+      ],
+      "scene_id": "108294846_176710506",
+      "single_viewpoint_agent_state_full": {
+        "position": [
+          -26.60947,
+          0.19904,
+          -2.34451
+        ],
+        "rotation": [
+          0.0,
+          -0.34838,
+          0.0,
+          0.93735
+        ]
+      },
+      "single_viewpoint_full_record": {
+        "agent_state": {
+          "position": [
+            -26.60947,
+            0.19904,
+            -2.34451
+          ],
+          "rotation": [
+            0.0,
+            -0.34838,
+            0.0,
+            0.93735
+          ]
+        },
+        "iou": 0.05883
+      },
+      "single_viewpoint_iou": 0.05883,
+      "single_viewpoint_position": [
+        -26.60947,
+        0.19904,
+        -2.34451
+      ],
+      "single_viewpoint_rotation": [
+        0.0,
+        -0.34838,
+        0.0,
+        0.93735
+      ],
+      "split": "train"
+    },
+    {
+      "episode_count_referencing_this_goal": 166,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\104348160_171513093.json.gz",
+      "goal_index": 2,
+      "goals_key": "104348160_171513093_couch",
+      "object_bounding_box": null,
+      "object_category": "couch",
+      "object_dimensions": null,
+      "object_handle": null,
+      "object_id": 59,
+      "object_metadata_missing_from_goal_schema": [
+        "object_semantic_id",
+        "semantic_id",
+        "object_template",
+        "object_template_handle",
+        "object_handle",
+        "handle",
+        "template_handle",
+        "object_type",
+        "category",
+        "bbox",
+        "bounding_box",
+        "aabb",
+        "dimensions",
+        "size",
+        "extent"
+      ],
+      "object_metadata_present": {},
+      "object_name": "85a26550bdf81dc4da5389afd672a933bb5cc4d7_:0000",
+      "object_name_id": null,
+      "object_position": [
+        -0.88389,
+        0.38503,
+        -1.44201
+      ],
+      "object_position_y": 0.38503,
+      "object_position_y_percentile_within_category": 0.20512820512820512,
+      "object_semantic_id": null,
+      "object_template": null,
+      "raw_goal_fields": [
+        "object_category",
+        "object_id",
+        "object_name",
+        "object_name_id",
+        "position",
+        "radius",
+        "room_id",
+        "room_name",
+        "view_points"
+      ],
+      "raw_goal_object_category": "couch",
+      "sanity_issues": [],
+      "sanity_notes": [
+        "object_name has no human-readable category hint; semantic label cannot be validated from name alone",
+        "no bbox/dimensions fields in goal schema"
+      ],
+      "scene_id": "104348160_171513093",
+      "single_viewpoint_agent_state_full": {
+        "position": [
+          -2.29002,
+          0.19369,
+          -3.13753
+        ],
+        "rotation": [
+          0.0,
+          -0.94067,
+          0.0,
+          0.33931
+        ]
+      },
+      "single_viewpoint_full_record": {
+        "agent_state": {
+          "position": [
+            -2.29002,
+            0.19369,
+            -3.13753
+          ],
+          "rotation": [
+            0.0,
+            -0.94067,
+            0.0,
+            0.33931
+          ]
+        },
+        "iou": 0.03751
+      },
+      "single_viewpoint_iou": 0.03751,
+      "single_viewpoint_position": [
+        -2.29002,
+        0.19369,
+        -3.13753
+      ],
+      "single_viewpoint_rotation": [
+        0.0,
+        -0.94067,
+        0.0,
+        0.33931
+      ],
+      "split": "train"
+    },
+    {
+      "episode_count_referencing_this_goal": 166,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\102816729.json.gz",
+      "goal_index": 15,
+      "goals_key": "102816729_potted_plant",
+      "object_bounding_box": null,
+      "object_category": "potted_plant",
+      "object_dimensions": null,
+      "object_handle": null,
+      "object_id": 164,
+      "object_metadata_missing_from_goal_schema": [
+        "object_semantic_id",
+        "semantic_id",
+        "object_template",
+        "object_template_handle",
+        "object_handle",
+        "handle",
+        "template_handle",
+        "object_type",
+        "category",
+        "bbox",
+        "bounding_box",
+        "aabb",
+        "dimensions",
+        "size",
+        "extent"
+      ],
+      "object_metadata_present": {},
+      "object_name": "c65b5e4533cf2fc2a8c145dddddfc79ba394c25a_:0000",
+      "object_name_id": null,
+      "object_position": [
+        -6.35276,
+        0.89745,
+        0.37155
+      ],
+      "object_position_y": 0.89745,
+      "object_position_y_percentile_within_category": 0.4866666666666667,
+      "object_semantic_id": null,
+      "object_template": null,
+      "raw_goal_fields": [
+        "object_category",
+        "object_id",
+        "object_name",
+        "object_name_id",
+        "position",
+        "radius",
+        "room_id",
+        "room_name",
+        "view_points"
+      ],
+      "raw_goal_object_category": "potted_plant",
+      "sanity_issues": [],
+      "sanity_notes": [
+        "object_name has no human-readable category hint; semantic label cannot be validated from name alone",
+        "no bbox/dimensions fields in goal schema"
+      ],
+      "scene_id": "102816729",
+      "single_viewpoint_agent_state_full": {
+        "position": [
+          -5.26389,
+          0.09346,
+          0.65518
+        ],
+        "rotation": [
+          0.0,
+          0.61152,
+          0.0,
+          0.79123
+        ]
+      },
+      "single_viewpoint_full_record": {
+        "agent_state": {
+          "position": [
+            -5.26389,
+            0.09346,
+            0.65518
+          ],
+          "rotation": [
+            0.0,
+            0.61152,
+            0.0,
+            0.79123
+          ]
+        },
+        "iou": 0.0471
+      },
+      "single_viewpoint_iou": 0.0471,
+      "single_viewpoint_position": [
+        -5.26389,
+        0.09346,
+        0.65518
+      ],
+      "single_viewpoint_rotation": [
+        0.0,
+        0.61152,
+        0.0,
+        0.79123
+      ],
+      "split": "train"
+    },
+    {
+      "episode_count_referencing_this_goal": 5,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\val\\content\\102816756.json.gz",
+      "goal_index": 20,
+      "goals_key": "102816756_potted_plant",
+      "object_bounding_box": null,
+      "object_category": "potted_plant",
+      "object_dimensions": null,
+      "object_handle": null,
+      "object_id": 202,
+      "object_metadata_missing_from_goal_schema": [
+        "object_semantic_id",
+        "semantic_id",
+        "object_template",
+        "object_template_handle",
+        "object_handle",
+        "handle",
+        "template_handle",
+        "object_type",
+        "category",
+        "bbox",
+        "bounding_box",
+        "aabb",
+        "dimensions",
+        "size",
+        "extent"
+      ],
+      "object_metadata_present": {},
+      "object_name": "b79121538512576ec56d645e67e30fc5ebefd858_:0000",
+      "object_name_id": null,
+      "object_position": [
+        -4.77935,
+        0.9102,
+        -9.11411
+      ],
+      "object_position_y": 0.9102,
+      "object_position_y_percentile_within_category": 0.5033333333333333,
+      "object_semantic_id": null,
+      "object_template": null,
+      "raw_goal_fields": [
+        "object_category",
+        "object_id",
+        "object_name",
+        "object_name_id",
+        "position",
+        "radius",
+        "room_id",
+        "room_name",
+        "view_points"
+      ],
+      "raw_goal_object_category": "potted_plant",
+      "sanity_issues": [],
+      "sanity_notes": [
+        "object_name has no human-readable category hint; semantic label cannot be validated from name alone",
+        "no bbox/dimensions fields in goal schema"
+      ],
+      "scene_id": "102816756",
+      "single_viewpoint_agent_state_full": {
+        "position": [
+          -4.70867,
+          0.09346,
+          -8.02034
+        ],
+        "rotation": [
+          0.0,
+          0.03226,
+          0.0,
+          0.99948
+        ]
+      },
+      "single_viewpoint_full_record": {
+        "agent_state": {
+          "position": [
+            -4.70867,
+            0.09346,
+            -8.02034
+          ],
+          "rotation": [
+            0.0,
+            0.03226,
+            0.0,
+            0.99948
+          ]
+        },
+        "iou": 0.02858
+      },
+      "single_viewpoint_iou": 0.02858,
+      "single_viewpoint_position": [
+        -4.70867,
+        0.09346,
+        -8.02034
+      ],
+      "single_viewpoint_rotation": [
+        0.0,
+        0.03226,
+        0.0,
+        0.99948
+      ],
+      "split": "val"
+    },
+    {
+      "episode_count_referencing_this_goal": 250,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\103997403_171030405.json.gz",
+      "goal_index": 2,
+      "goals_key": "103997403_171030405_potted_plant",
+      "object_bounding_box": null,
+      "object_category": "potted_plant",
+      "object_dimensions": null,
+      "object_handle": null,
+      "object_id": 32,
+      "object_metadata_missing_from_goal_schema": [
+        "object_semantic_id",
+        "semantic_id",
+        "object_template",
+        "object_template_handle",
+        "object_handle",
+        "handle",
+        "template_handle",
+        "object_type",
+        "category",
+        "bbox",
+        "bounding_box",
+        "aabb",
+        "dimensions",
+        "size",
+        "extent"
+      ],
+      "object_metadata_present": {},
+      "object_name": "dd7020ee1b0faeca3b3295e6abc9f3fa4a1a1d13_:0000",
+      "object_name_id": null,
+      "object_position": [
+        -8.54819,
+        0.867,
+        -2.63375
+      ],
+      "object_position_y": 0.867,
+      "object_position_y_percentile_within_category": 0.45,
+      "object_semantic_id": null,
+      "object_template": null,
+      "raw_goal_fields": [
+        "object_category",
+        "object_id",
+        "object_name",
+        "object_name_id",
+        "position",
+        "radius",
+        "room_id",
+        "room_name",
+        "view_points"
+      ],
+      "raw_goal_object_category": "potted_plant",
+      "sanity_issues": [],
+      "sanity_notes": [
+        "object_name has no human-readable category hint; semantic label cannot be validated from name alone",
+        "no bbox/dimensions fields in goal schema"
+      ],
+      "scene_id": "103997403_171030405",
+      "single_viewpoint_agent_state_full": {
+        "position": [
+          -9.48319,
+          0.09346,
+          -3.28375
+        ],
+        "rotation": [
+          0.0,
+          -0.88623,
+          0.0,
+          0.46325
+        ]
+      },
+      "single_viewpoint_full_record": {
+        "agent_state": {
+          "position": [
+            -9.48319,
+            0.09346,
+            -3.28375
+          ],
+          "rotation": [
+            0.0,
+            -0.88623,
+            0.0,
+            0.46325
+          ]
+        },
+        "iou": 0.01831
+      },
+      "single_viewpoint_iou": 0.01831,
+      "single_viewpoint_position": [
+        -9.48319,
+        0.09346,
+        -3.28375
+      ],
+      "single_viewpoint_rotation": [
+        0.0,
+        -0.88623,
+        0.0,
+        0.46325
+      ],
+      "split": "train"
+    },
+    {
+      "episode_count_referencing_this_goal": 200,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\103997541_171030615.json.gz",
+      "goal_index": 7,
+      "goals_key": "103997541_171030615_potted_plant",
+      "object_bounding_box": null,
+      "object_category": "potted_plant",
+      "object_dimensions": null,
+      "object_handle": null,
+      "object_id": 101,
+      "object_metadata_missing_from_goal_schema": [
+        "object_semantic_id",
+        "semantic_id",
+        "object_template",
+        "object_template_handle",
+        "object_handle",
+        "handle",
+        "template_handle",
+        "object_type",
+        "category",
+        "bbox",
+        "bounding_box",
+        "aabb",
+        "dimensions",
+        "size",
+        "extent"
+      ],
+      "object_metadata_present": {},
+      "object_name": "8d017fc7709614540587256fc11b809c9d7dc570_:0000",
+      "object_name_id": null,
+      "object_position": [
+        -6.13742,
+        1.97775,
+        2.25798
+      ],
+      "object_position_y": 1.97775,
+      "object_position_y_percentile_within_category": 0.9666666666666667,
+      "object_semantic_id": null,
+      "object_template": null,
+      "raw_goal_fields": [
+        "object_category",
+        "object_id",
+        "object_name",
+        "object_name_id",
+        "position",
+        "radius",
+        "room_id",
+        "room_name",
+        "view_points"
+      ],
+      "raw_goal_object_category": "potted_plant",
+      "sanity_issues": [],
+      "sanity_notes": [
+        "object_name has no human-readable category hint; semantic label cannot be validated from name alone",
+        "no bbox/dimensions fields in goal schema"
+      ],
+      "scene_id": "103997541_171030615",
+      "single_viewpoint_agent_state_full": {
+        "position": [
+          -7.13007,
+          0.08293,
+          2.06889
+        ],
+        "rotation": [
+          0.0,
+          -0.77043,
+          0.0,
+          0.63752
+        ]
+      },
+      "single_viewpoint_full_record": {
+        "agent_state": {
+          "position": [
+            -7.13007,
+            0.08293,
+            2.06889
+          ],
+          "rotation": [
+            0.0,
+            -0.77043,
+            0.0,
+            0.63752
+          ]
+        },
+        "iou": 0.00102
+      },
+      "single_viewpoint_iou": 0.00102,
+      "single_viewpoint_position": [
+        -7.13007,
+        0.08293,
+        2.06889
+      ],
+      "single_viewpoint_rotation": [
+        0.0,
+        -0.77043,
+        0.0,
+        0.63752
+      ],
+      "split": "train"
+    },
+    {
+      "episode_count_referencing_this_goal": 200,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\103997541_171030615.json.gz",
+      "goal_index": 15,
+      "goals_key": "103997541_171030615_potted_plant",
+      "object_bounding_box": null,
+      "object_category": "potted_plant",
+      "object_dimensions": null,
+      "object_handle": null,
+      "object_id": 119,
+      "object_metadata_missing_from_goal_schema": [
+        "object_semantic_id",
+        "semantic_id",
+        "object_template",
+        "object_template_handle",
+        "object_handle",
+        "handle",
+        "template_handle",
+        "object_type",
+        "category",
+        "bbox",
+        "bounding_box",
+        "aabb",
+        "dimensions",
+        "size",
+        "extent"
+      ],
+      "object_metadata_present": {},
+      "object_name": "ea233d6e83ef6d189dc92600b820430307b58cea_:0000",
+      "object_name_id": null,
+      "object_position": [
+        -6.15257,
+        1.9682,
+        1.85821
+      ],
+      "object_position_y": 1.9682,
+      "object_position_y_percentile_within_category": 0.96,
+      "object_semantic_id": null,
+      "object_template": null,
+      "raw_goal_fields": [
+        "object_category",
+        "object_id",
+        "object_name",
+        "object_name_id",
+        "position",
+        "radius",
+        "room_id",
+        "room_name",
+        "view_points"
+      ],
+      "raw_goal_object_category": "potted_plant",
+      "sanity_issues": [],
+      "sanity_notes": [
+        "object_name has no human-readable category hint; semantic label cannot be validated from name alone",
+        "no bbox/dimensions fields in goal schema"
+      ],
+      "scene_id": "103997541_171030615",
+      "single_viewpoint_agent_state_full": {
+        "position": [
+          -7.25037,
+          0.08293,
+          1.84117
+        ],
+        "rotation": [
+          0.0,
+          -0.71257,
+          0.0,
+          0.7016
+        ]
+      },
+      "single_viewpoint_full_record": {
+        "agent_state": {
+          "position": [
+            -7.25037,
+            0.08293,
+            1.84117
+          ],
+          "rotation": [
+            0.0,
+            -0.71257,
+            0.0,
+            0.7016
+          ]
+        },
+        "iou": 0.00103
+      },
+      "single_viewpoint_iou": 0.00103,
+      "single_viewpoint_position": [
+        -7.25037,
+        0.08293,
+        1.84117
+      ],
+      "single_viewpoint_rotation": [
+        0.0,
+        -0.71257,
+        0.0,
+        0.7016
+      ],
+      "split": "train"
+    },
+    {
+      "episode_count_referencing_this_goal": 166,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\104862687_172226883.json.gz",
+      "goal_index": 4,
+      "goals_key": "104862687_172226883_potted_plant",
+      "object_bounding_box": null,
+      "object_category": "potted_plant",
+      "object_dimensions": null,
+      "object_handle": null,
+      "object_id": 34,
+      "object_metadata_missing_from_goal_schema": [
+        "object_semantic_id",
+        "semantic_id",
+        "object_template",
+        "object_template_handle",
+        "object_handle",
+        "handle",
+        "template_handle",
+        "object_type",
+        "category",
+        "bbox",
+        "bounding_box",
+        "aabb",
+        "dimensions",
+        "size",
+        "extent"
+      ],
+      "object_metadata_present": {},
+      "object_name": "34170a3abede075d1e15942197394d95ee063bf7_:0000",
+      "object_name_id": null,
+      "object_position": [
+        -0.7217,
+        1.06228,
+        0.05738
+      ],
+      "object_position_y": 1.06228,
+      "object_position_y_percentile_within_category": 0.6633333333333333,
+      "object_semantic_id": null,
+      "object_template": null,
+      "raw_goal_fields": [
+        "object_category",
+        "object_id",
+        "object_name",
+        "object_name_id",
+        "position",
+        "radius",
+        "room_id",
+        "room_name",
+        "view_points"
+      ],
+      "raw_goal_object_category": "potted_plant",
+      "sanity_issues": [],
+      "sanity_notes": [
+        "object_name has no human-readable category hint; semantic label cannot be validated from name alone",
+        "no bbox/dimensions fields in goal schema"
+      ],
+      "scene_id": "104862687_172226883",
+      "single_viewpoint_agent_state_full": {
+        "position": [
+          -1.70075,
+          0.19477,
+          -0.91094
+        ],
+        "rotation": [
+          0.0,
+          -0.92282,
+          0.0,
+          0.38523
+        ]
+      },
+      "single_viewpoint_full_record": {
+        "agent_state": {
+          "position": [
+            -1.70075,
+            0.19477,
+            -0.91094
+          ],
+          "rotation": [
+            0.0,
+            -0.92282,
+            0.0,
+            0.38523
+          ]
+        },
+        "iou": 0.1448
+      },
+      "single_viewpoint_iou": 0.1448,
+      "single_viewpoint_position": [
+        -1.70075,
+        0.19477,
+        -0.91094
+      ],
+      "single_viewpoint_rotation": [
+        0.0,
+        -0.92282,
+        0.0,
+        0.38523
+      ],
+      "split": "train"
+    },
+    {
+      "episode_count_referencing_this_goal": 5,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\val\\content\\106878915_174887025.json.gz",
+      "goal_index": 19,
+      "goals_key": "106878915_174887025_potted_plant",
+      "object_bounding_box": null,
+      "object_category": "potted_plant",
+      "object_dimensions": null,
+      "object_handle": null,
+      "object_id": 166,
+      "object_metadata_missing_from_goal_schema": [
+        "object_semantic_id",
+        "semantic_id",
+        "object_template",
+        "object_template_handle",
+        "object_handle",
+        "handle",
+        "template_handle",
+        "object_type",
+        "category",
+        "bbox",
+        "bounding_box",
+        "aabb",
+        "dimensions",
+        "size",
+        "extent"
+      ],
+      "object_metadata_present": {},
+      "object_name": "b827ad39b820d4908a4222dc95dd4b63ecf6c0a6_part_2_:0001",
+      "object_name_id": null,
+      "object_position": [
+        -2.40237,
+        1.83841,
+        -1.30953
+      ],
+      "object_position_y": 1.83841,
+      "object_position_y_percentile_within_category": 0.92,
+      "object_semantic_id": null,
+      "object_template": null,
+      "raw_goal_fields": [
+        "object_category",
+        "object_id",
+        "object_name",
+        "object_name_id",
+        "position",
+        "radius",
+        "room_id",
+        "room_name",
+        "view_points"
+      ],
+      "raw_goal_object_category": "potted_plant",
+      "sanity_issues": [],
+      "sanity_notes": [
+        "object_name has no human-readable category hint; semantic label cannot be validated from name alone",
+        "no bbox/dimensions fields in goal schema"
+      ],
+      "scene_id": "106878915_174887025",
+      "single_viewpoint_agent_state_full": {
+        "position": [
+          -3.4789,
+          0.19388,
+          -1.27182
+        ],
+        "rotation": [
+          0.0,
+          -0.69462,
+          0.0,
+          0.71938
+        ]
+      },
+      "single_viewpoint_full_record": {
+        "agent_state": {
+          "position": [
+            -3.4789,
+            0.19388,
+            -1.27182
+          ],
+          "rotation": [
+            0.0,
+            -0.69462,
+            0.0,
+            0.71938
+          ]
+        },
+        "iou": 0.00115
+      },
+      "single_viewpoint_iou": 0.00115,
+      "single_viewpoint_position": [
+        -3.4789,
+        0.19388,
+        -1.27182
+      ],
+      "single_viewpoint_rotation": [
+        0.0,
+        -0.69462,
+        0.0,
+        0.71938
+      ],
+      "split": "val"
+    },
+    {
+      "episode_count_referencing_this_goal": 200,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\107734227_176000091.json.gz",
+      "goal_index": 12,
+      "goals_key": "107734227_176000091_potted_plant",
+      "object_bounding_box": null,
+      "object_category": "potted_plant",
+      "object_dimensions": null,
+      "object_handle": null,
+      "object_id": 130,
+      "object_metadata_missing_from_goal_schema": [
+        "object_semantic_id",
+        "semantic_id",
+        "object_template",
+        "object_template_handle",
+        "object_handle",
+        "handle",
+        "template_handle",
+        "object_type",
+        "category",
+        "bbox",
+        "bounding_box",
+        "aabb",
+        "dimensions",
+        "size",
+        "extent"
+      ],
+      "object_metadata_present": {},
+      "object_name": "9eccc1dea9b821181517b1bbea57d70c6fad51af_:0000",
+      "object_name_id": null,
+      "object_position": [
+        4.50463,
+        0.90926,
+        -0.63487
+      ],
+      "object_position_y": 0.90926,
+      "object_position_y_percentile_within_category": 0.5,
+      "object_semantic_id": null,
+      "object_template": null,
+      "raw_goal_fields": [
+        "object_category",
+        "object_id",
+        "object_name",
+        "object_name_id",
+        "position",
+        "radius",
+        "room_id",
+        "room_name",
+        "view_points"
+      ],
+      "raw_goal_object_category": "potted_plant",
+      "sanity_issues": [],
+      "sanity_notes": [
+        "object_name has no human-readable category hint; semantic label cannot be validated from name alone",
+        "no bbox/dimensions fields in goal schema"
+      ],
+      "scene_id": "107734227_176000091",
+      "single_viewpoint_agent_state_full": {
+        "position": [
+          3.32956,
+          0.16061,
+          -1.23419
+        ],
+        "rotation": [
+          0.0,
+          -0.85275,
+          0.0,
+          0.52233
+        ]
+      },
+      "single_viewpoint_full_record": {
+        "agent_state": {
+          "position": [
+            3.32956,
+            0.16061,
+            -1.23419
+          ],
+          "rotation": [
+            0.0,
+            -0.85275,
+            0.0,
+            0.52233
+          ]
+        },
+        "iou": 0.09069
+      },
+      "single_viewpoint_iou": 0.09069,
+      "single_viewpoint_position": [
+        3.32956,
+        0.16061,
+        -1.23419
+      ],
+      "single_viewpoint_rotation": [
+        0.0,
+        -0.85275,
+        0.0,
+        0.52233
+      ],
+      "split": "train"
+    },
+    {
+      "episode_count_referencing_this_goal": 166,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\108294798_176710428.json.gz",
+      "goal_index": 16,
+      "goals_key": "108294798_176710428_potted_plant",
+      "object_bounding_box": null,
+      "object_category": "potted_plant",
+      "object_dimensions": null,
+      "object_handle": null,
+      "object_id": 125,
+      "object_metadata_missing_from_goal_schema": [
+        "object_semantic_id",
+        "semantic_id",
+        "object_template",
+        "object_template_handle",
+        "object_handle",
+        "handle",
+        "template_handle",
+        "object_type",
+        "category",
+        "bbox",
+        "bounding_box",
+        "aabb",
+        "dimensions",
+        "size",
+        "extent"
+      ],
+      "object_metadata_present": {},
+      "object_name": "dd7020ee1b0faeca3b3295e6abc9f3fa4a1a1d13_:0006",
+      "object_name_id": null,
+      "object_position": [
+        -10.81291,
+        1.0194,
+        -3.78635
+      ],
+      "object_position_y": 1.0194,
+      "object_position_y_percentile_within_category": 0.62,
+      "object_semantic_id": null,
+      "object_template": null,
+      "raw_goal_fields": [
+        "object_category",
+        "object_id",
+        "object_name",
+        "object_name_id",
+        "position",
+        "radius",
+        "room_id",
+        "room_name",
+        "view_points"
+      ],
+      "raw_goal_object_category": "potted_plant",
+      "sanity_issues": [],
+      "sanity_notes": [
+        "object_name has no human-readable category hint; semantic label cannot be validated from name alone",
+        "no bbox/dimensions fields in goal schema"
+      ],
+      "scene_id": "108294798_176710428",
+      "single_viewpoint_agent_state_full": {
+        "position": [
+          -10.11291,
+          0.1847,
+          -4.63136
+        ],
+        "rotation": [
+          0.0,
+          0.94077,
+          0.0,
+          0.33905
+        ]
+      },
+      "single_viewpoint_full_record": {
+        "agent_state": {
+          "position": [
+            -10.11291,
+            0.1847,
+            -4.63136
+          ],
+          "rotation": [
+            0.0,
+            0.94077,
+            0.0,
+            0.33905
+          ]
+        },
+        "iou": 0.02319
+      },
+      "single_viewpoint_iou": 0.02319,
+      "single_viewpoint_position": [
+        -10.11291,
+        0.1847,
+        -4.63136
+      ],
+      "single_viewpoint_rotation": [
+        0.0,
+        0.94077,
+        0.0,
+        0.33905
+      ],
+      "split": "train"
+    },
+    {
+      "episode_count_referencing_this_goal": 166,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\108294798_176710428.json.gz",
+      "goal_index": 1,
+      "goals_key": "108294798_176710428_potted_plant",
+      "object_bounding_box": null,
+      "object_category": "potted_plant",
+      "object_dimensions": null,
+      "object_handle": null,
+      "object_id": 96,
+      "object_metadata_missing_from_goal_schema": [
+        "object_semantic_id",
+        "semantic_id",
+        "object_template",
+        "object_template_handle",
+        "object_handle",
+        "handle",
+        "template_handle",
+        "object_type",
+        "category",
+        "bbox",
+        "bounding_box",
+        "aabb",
+        "dimensions",
+        "size",
+        "extent"
+      ],
+      "object_metadata_present": {},
+      "object_name": "95603e700e54fdebbae7c3228ecd0f9a849424d3_:0000",
+      "object_name_id": null,
+      "object_position": [
+        -5.70017,
+        1.56,
+        -3.23232
+      ],
+      "object_position_y": 1.56,
+      "object_position_y_percentile_within_category": 0.8533333333333334,
+      "object_semantic_id": null,
+      "object_template": null,
+      "raw_goal_fields": [
+        "object_category",
+        "object_id",
+        "object_name",
+        "object_name_id",
+        "position",
+        "radius",
+        "room_id",
+        "room_name",
+        "view_points"
+      ],
+      "raw_goal_object_category": "potted_plant",
+      "sanity_issues": [],
+      "sanity_notes": [
+        "object_name has no human-readable category hint; semantic label cannot be validated from name alone",
+        "no bbox/dimensions fields in goal schema"
+      ],
+      "scene_id": "108294798_176710428",
+      "single_viewpoint_agent_state_full": {
+        "position": [
+          -6.33017,
+          0.1847,
+          -4.13232
+        ],
+        "rotation": [
+          0.0,
+          -0.95374,
+          0.0,
+          0.30064
+        ]
+      },
+      "single_viewpoint_full_record": {
+        "agent_state": {
+          "position": [
+            -6.33017,
+            0.1847,
+            -4.13232
+          ],
+          "rotation": [
+            0.0,
+            -0.95374,
+            0.0,
+            0.30064
+          ]
+        },
+        "iou": 0.00118
+      },
+      "single_viewpoint_iou": 0.00118,
+      "single_viewpoint_position": [
+        -6.33017,
+        0.1847,
+        -4.13232
+      ],
+      "single_viewpoint_rotation": [
+        0.0,
+        -0.95374,
+        0.0,
+        0.30064
+      ],
+      "split": "train"
+    },
+    {
+      "episode_count_referencing_this_goal": 166,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\108294897_176710602.json.gz",
+      "goal_index": 1,
+      "goals_key": "108294897_176710602_potted_plant",
+      "object_bounding_box": null,
+      "object_category": "potted_plant",
+      "object_dimensions": null,
+      "object_handle": null,
+      "object_id": 22,
+      "object_metadata_missing_from_goal_schema": [
+        "object_semantic_id",
+        "semantic_id",
+        "object_template",
+        "object_template_handle",
+        "object_handle",
+        "handle",
+        "template_handle",
+        "object_type",
+        "category",
+        "bbox",
+        "bounding_box",
+        "aabb",
+        "dimensions",
+        "size",
+        "extent"
+      ],
+      "object_metadata_present": {},
+      "object_name": "1babc21347ad1d49accb8c6df726aa9f85bdde93_part_8_:0000",
+      "object_name_id": null,
+      "object_position": [
+        3.7563,
+        1.37869,
+        -1.08831
+      ],
+      "object_position_y": 1.37869,
+      "object_position_y_percentile_within_category": 0.83,
+      "object_semantic_id": null,
+      "object_template": null,
+      "raw_goal_fields": [
+        "object_category",
+        "object_id",
+        "object_name",
+        "object_name_id",
+        "position",
+        "radius",
+        "room_id",
+        "room_name",
+        "view_points"
+      ],
+      "raw_goal_object_category": "potted_plant",
+      "sanity_issues": [],
+      "sanity_notes": [
+        "object_name has no human-readable category hint; semantic label cannot be validated from name alone",
+        "no bbox/dimensions fields in goal schema"
+      ],
+      "scene_id": "108294897_176710602",
+      "single_viewpoint_agent_state_full": {
+        "position": [
+          3.66629,
+          0.08723,
+          -2.07672
+        ],
+        "rotation": [
+          0.0,
+          -0.99897,
+          0.0,
+          0.04539
+        ]
+      },
+      "single_viewpoint_full_record": {
+        "agent_state": {
+          "position": [
+            3.66629,
+            0.08723,
+            -2.07672
+          ],
+          "rotation": [
+            0.0,
+            -0.99897,
+            0.0,
+            0.04539
+          ]
+        },
+        "iou": 0.01762
+      },
+      "single_viewpoint_iou": 0.01762,
+      "single_viewpoint_position": [
+        3.66629,
+        0.08723,
+        -2.07672
+      ],
+      "single_viewpoint_rotation": [
+        0.0,
+        -0.99897,
+        0.0,
+        0.04539
+      ],
+      "split": "train"
+    },
+    {
+      "episode_count_referencing_this_goal": 166,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\train\\content\\108736656_177263304.json.gz",
+      "goal_index": 0,
+      "goals_key": "108736656_177263304_potted_plant",
+      "object_bounding_box": null,
+      "object_category": "potted_plant",
+      "object_dimensions": null,
+      "object_handle": null,
+      "object_id": 200,
+      "object_metadata_missing_from_goal_schema": [
+        "object_semantic_id",
+        "semantic_id",
+        "object_template",
+        "object_template_handle",
+        "object_handle",
+        "handle",
+        "template_handle",
+        "object_type",
+        "category",
+        "bbox",
+        "bounding_box",
+        "aabb",
+        "dimensions",
+        "size",
+        "extent"
+      ],
+      "object_metadata_present": {},
+      "object_name": "09b1df19e95ab47e50c8aac06137ef2f51144d34_:0000",
+      "object_name_id": null,
+      "object_position": [
+        -6.2313,
+        1.75,
+        -4.27467
+      ],
+      "object_position_y": 1.75,
+      "object_position_y_percentile_within_category": 0.8966666666666666,
+      "object_semantic_id": null,
+      "object_template": null,
+      "raw_goal_fields": [
+        "object_category",
+        "object_id",
+        "object_name",
+        "object_name_id",
+        "position",
+        "radius",
+        "room_id",
+        "room_name",
+        "view_points"
+      ],
+      "raw_goal_object_category": "potted_plant",
+      "sanity_issues": [],
+      "sanity_notes": [
+        "object_name has no human-readable category hint; semantic label cannot be validated from name alone",
+        "no bbox/dimensions fields in goal schema"
+      ],
+      "scene_id": "108736656_177263304",
+      "single_viewpoint_agent_state_full": {
+        "position": [
+          -5.55097,
+          0.09,
+          -5.21933
+        ],
+        "rotation": [
+          0.0,
+          0.9517,
+          0.0,
+          0.30703
+        ]
+      },
+      "single_viewpoint_full_record": {
+        "agent_state": {
+          "position": [
+            -5.55097,
+            0.09,
+            -5.21933
+          ],
+          "rotation": [
+            0.0,
+            0.9517,
+            0.0,
+            0.30703
+          ]
+        },
+        "iou": 0.03212
+      },
+      "single_viewpoint_iou": 0.03212,
+      "single_viewpoint_position": [
+        -5.55097,
+        0.09,
+        -5.21933
+      ],
+      "single_viewpoint_rotation": [
+        0.0,
+        0.9517,
+        0.0,
+        0.30703
+      ],
+      "split": "train"
+    },
+    {
+      "episode_count_referencing_this_goal": 5,
+      "file": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab\\val\\content\\108736800_177263517.json.gz",
+      "goal_index": 1,
+      "goals_key": "108736800_177263517_potted_plant",
+      "object_bounding_box": null,
+      "object_category": "potted_plant",
+      "object_dimensions": null,
+      "object_handle": null,
+      "object_id": 175,
+      "object_metadata_missing_from_goal_schema": [
+        "object_semantic_id",
+        "semantic_id",
+        "object_template",
+        "object_template_handle",
+        "object_handle",
+        "handle",
+        "template_handle",
+        "object_type",
+        "category",
+        "bbox",
+        "bounding_box",
+        "aabb",
+        "dimensions",
+        "size",
+        "extent"
+      ],
+      "object_metadata_present": {},
+      "object_name": "054a4edb60cf2145e98274ad3fcbfc212e6e2445_:0001",
+      "object_name_id": null,
+      "object_position": [
+        2.39459,
+        0.8096,
+        -1.45107
+      ],
+      "object_position_y": 0.8096,
+      "object_position_y_percentile_within_category": 0.39666666666666667,
+      "object_semantic_id": null,
+      "object_template": null,
+      "raw_goal_fields": [
+        "object_category",
+        "object_id",
+        "object_name",
+        "object_name_id",
+        "position",
+        "radius",
+        "room_id",
+        "room_name",
+        "view_points"
+      ],
+      "raw_goal_object_category": "potted_plant",
+      "sanity_issues": [],
+      "sanity_notes": [
+        "object_name has no human-readable category hint; semantic label cannot be validated from name alone",
+        "no bbox/dimensions fields in goal schema"
+      ],
+      "scene_id": "108736800_177263517",
+      "single_viewpoint_agent_state_full": {
+        "position": [
+          1.90205,
+          0.19356,
+          -2.47046
+        ],
+        "rotation": [
+          0.0,
+          -0.97478,
+          0.0,
+          0.22315
+        ]
+      },
+      "single_viewpoint_full_record": {
+        "agent_state": {
+          "position": [
+            1.90205,
+            0.19356,
+            -2.47046
+          ],
+          "rotation": [
+            0.0,
+            -0.97478,
+            0.0,
+            0.22315
+          ]
+        },
+        "iou": 0.00767
+      },
+      "single_viewpoint_iou": 0.00767,
+      "single_viewpoint_position": [
+        1.90205,
+        0.19356,
+        -2.47046
+      ],
+      "single_viewpoint_rotation": [
+        0.0,
+        -0.97478,
+        0.0,
+        0.22315
+      ],
+      "split": "val"
+    }
+  ],
+  "input": "ovon_hssd_audit\\outputs\\hssd_one_viewpoint_goals.json",
+  "method": "Static read of one-viewpoint-goal summary and original HSSD JSON/GZip shards; no Habitat simulation or rendering.",
+  "potted_plant_pattern_summary": {
+    "metadata_scope_note": "Native goal records expose object_id/object_name/object_category/position/view_points, but do not expose semantic-readable template, bbox, or dimensions in these cases.",
+    "missing_bbox_count": 13,
+    "missing_dimensions_count": 13,
+    "missing_position_count": 0,
+    "object_position_y": {
+      "count": 13,
+      "max": 1.97775,
+      "mean": 1.3037107692307692,
+      "median": 1.06228,
+      "min": 0.8096
+    },
+    "scene_counts": {
+      "102816729": 1,
+      "102816756": 1,
+      "103997403_171030405": 1,
+      "103997541_171030615": 2,
+      "104862687_172226883": 1,
+      "106878915_174887025": 1,
+      "107734227_176000091": 1,
+      "108294798_176710428": 2,
+      "108294897_176710602": 1,
+      "108736656_177263304": 1,
+      "108736800_177263517": 1
+    },
+    "single_viewpoint_iou": {
+      "count": 13,
+      "max": 0.1448,
+      "mean": 0.03188153846153846,
+      "median": 0.01831,
+      "min": 0.00102
+    },
+    "viewpoint_position_y": {
+      "count": 13,
+      "max": 0.19477,
+      "mean": 0.1335146153846154,
+      "median": 0.09346,
+      "min": 0.08293
+    }
+  },
+  "totals": {
+    "categories": {
+      "chair": 3,
+      "couch": 1,
+      "potted_plant": 13
+    },
+    "one_viewpoint_goals": 17,
+    "potted_plant_one_viewpoint_goals": 13,
+    "potted_plant_scenes": 11,
+    "sanity_issue_counts_all": {},
+    "sanity_issue_counts_potted_plant": {},
+    "scenes_with_one_viewpoint_goals": 15
+  }
+}

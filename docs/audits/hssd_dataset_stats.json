@@ -1,0 +1,379 @@
+{
+  "category_summary": [
+    {
+      "category": "chair",
+      "episodes": 23445,
+      "goals": 2361,
+      "train_episodes": 23208,
+      "val_episodes": 237,
+      "viewpoints": 547127,
+      "viewpoints_per_goal_avg": 231.73528166031343,
+      "viewpoints_per_goal_max": 956,
+      "viewpoints_per_goal_min": 1
+    },
+    {
+      "category": "potted_plant",
+      "episodes": 22386,
+      "goals": 1777,
+      "train_episodes": 22175,
+      "val_episodes": 211,
+      "viewpoints": 293108,
+      "viewpoints_per_goal_avg": 164.94541361845808,
+      "viewpoints_per_goal_max": 5589,
+      "viewpoints_per_goal_min": 1
+    },
+    {
+      "category": "couch",
+      "episodes": 22362,
+      "goals": 417,
+      "train_episodes": 22125,
+      "val_episodes": 237,
+      "viewpoints": 217166,
+      "viewpoints_per_goal_avg": 520.7817745803358,
+      "viewpoints_per_goal_max": 2594,
+      "viewpoints_per_goal_min": 1
+    },
+    {
+      "category": "bed",
+      "episodes": 20300,
+      "goals": 418,
+      "train_episodes": 20076,
+      "val_episodes": 224,
+      "viewpoints": 184179,
+      "viewpoints_per_goal_avg": 440.61961722488036,
+      "viewpoints_per_goal_max": 1488,
+      "viewpoints_per_goal_min": 12
+    },
+    {
+      "category": "tv",
+      "episodes": 19150,
+      "goals": 290,
+      "train_episodes": 18959,
+      "val_episodes": 191,
+      "viewpoints": 44989,
+      "viewpoints_per_goal_avg": 155.1344827586207,
+      "viewpoints_per_goal_max": 638,
+      "viewpoints_per_goal_min": 2
+    },
+    {
+      "category": "toilet",
+      "episodes": 14157,
+      "goals": 241,
+      "train_episodes": 14009,
+      "val_episodes": 148,
+      "viewpoints": 30500,
+      "viewpoints_per_goal_avg": 126.55601659751038,
+      "viewpoints_per_goal_max": 332,
+      "viewpoints_per_goal_min": 6
+    }
+  ],
+  "dataset_root": "hssd\\habitat-lab\\data\\datasets\\objectnav\\hssd-hab",
+  "episode_keys": {
+    "additional_obj_config_paths": 121800,
+    "episode_id": 121800,
+    "goals": 121800,
+    "info": 121800,
+    "object_category": 121800,
+    "scene_dataset_config": 121800,
+    "scene_id": 121800,
+    "shortest_paths": 121800,
+    "start_position": 121800,
+    "start_room": 121800,
+    "start_rotation": 121800
+  },
+  "known_categories_from_maps_and_episodes": [
+    "bed",
+    "chair",
+    "couch",
+    "potted_plant",
+    "toilet",
+    "tv"
+  ],
+  "sampled_episode_keys": [
+    [
+      "additional_obj_config_paths",
+      "episode_id",
+      "goals",
+      "info",
+      "object_category",
+      "scene_dataset_config",
+      "scene_id",
+      "shortest_paths",
+      "start_position",
+      "start_room",
+      "start_rotation"
+    ],
+    [
+      "additional_obj_config_paths",
+      "episode_id",
+      "goals",
+      "info",
+      "object_category",
+      "scene_dataset_config",
+      "scene_id",
+      "shortest_paths",
+      "start_position",
+      "start_room",
+      "start_rotation"
+    ],
+    [
+      "additional_obj_config_paths",
+      "episode_id",
+      "goals",
+      "info",
+      "object_category",
+      "scene_dataset_config",
+      "scene_id",
+      "shortest_paths",
+      "start_position",
+      "start_room",
+      "start_rotation"
+    ],
+    [
+      "additional_obj_config_paths",
+      "episode_id",
+      "goals",
+      "info",
+      "object_category",
+      "scene_dataset_config",
+      "scene_id",
+      "shortest_paths",
+      "start_position",
+      "start_room",
+      "start_rotation"
+    ],
+    [
+      "additional_obj_config_paths",
+      "episode_id",
+      "goals",
+      "info",
+      "object_category",
+      "scene_dataset_config",
+      "scene_id",
+      "shortest_paths",
+      "start_position",
+      "start_room",
+      "start_rotation"
+    ],
+    [
+      "additional_obj_config_paths",
+      "episode_id",
+      "goals",
+      "info",
+      "object_category",
+      "scene_dataset_config",
+      "scene_id",
+      "shortest_paths",
+      "start_position",
+      "start_room",
+      "start_rotation"
+    ],
+    [
+      "additional_obj_config_paths",
+      "episode_id",
+      "goals",
+      "info",
+      "object_category",
+      "scene_dataset_config",
+      "scene_id",
+      "shortest_paths",
+      "start_position",
+      "start_room",
+      "start_rotation"
+    ],
+    [
+      "additional_obj_config_paths",
+      "episode_id",
+      "goals",
+      "info",
+      "object_category",
+      "scene_dataset_config",
+      "scene_id",
+      "shortest_paths",
+      "start_position",
+      "start_room",
+      "start_rotation"
+    ],
+    [
+      "additional_obj_config_paths",
+      "episode_id",
+      "goals",
+      "info",
+      "object_category",
+      "scene_dataset_config",
+      "scene_id",
+      "shortest_paths",
+      "start_position",
+      "start_room",
+      "start_rotation"
+    ],
+    [
+      "additional_obj_config_paths",
+      "episode_id",
+      "goals",
+      "info",
+      "object_category",
+      "scene_dataset_config",
+      "scene_id",
+      "shortest_paths",
+      "start_position",
+      "start_room",
+      "start_rotation"
+    ]
+  ],
+  "sampled_top_level_keys": [
+    [
+      "category_to_scene_annotation_category_id",
+      "category_to_task_category_id",
+      "episodes",
+      "goals_by_category"
+    ],
+    [
+      "category_to_scene_annotation_category_id",
+      "category_to_task_category_id",
+      "episodes",
+      "goals_by_category"
+    ],
+    [
+      "category_to_scene_annotation_category_id",
+      "category_to_task_category_id",
+      "episodes",
+      "goals_by_category"
+    ],
+    [
+      "category_to_scene_annotation_category_id",
+      "category_to_task_category_id",
+      "episodes",
+      "goals_by_category"
+    ],
+    [
+      "category_to_scene_annotation_category_id",
+      "category_to_task_category_id",
+      "episodes",
+      "goals_by_category"
+    ],
+    [
+      "category_to_scene_annotation_category_id",
+      "category_to_task_category_id",
+      "episodes",
+      "goals_by_category"
+    ],
+    [
+      "category_to_scene_annotation_category_id",
+      "category_to_task_category_id",
+      "episodes",
+      "goals_by_category"
+    ],
+    [
+      "category_to_scene_annotation_category_id",
+      "category_to_task_category_id",
+      "episodes",
+      "goals_by_category"
+    ],
+    [
+      "category_to_scene_annotation_category_id",
+      "category_to_task_category_id",
+      "episodes",
+      "goals_by_category"
+    ],
+    [
+      "category_to_scene_annotation_category_id",
+      "category_to_task_category_id",
+      "episodes",
+      "goals_by_category"
+    ]
+  ],
+  "splits": {
+    "train": {
+      "categories": {
+        "bed": 20076,
+        "chair": 23208,
+        "couch": 22125,
+        "potted_plant": 22175,
+        "toilet": 14009,
+        "tv": 18959
+      },
+      "episode_keys": {
+        "additional_obj_config_paths": 120552,
+        "episode_id": 120552,
+        "goals": 120552,
+        "info": 120552,
+        "object_category": 120552,
+        "scene_dataset_config": 120552,
+        "scene_id": 120552,
+        "shortest_paths": 120552,
+        "start_position": 120552,
+        "start_room": 120552,
+        "start_rotation": 120552
+      },
+      "episodes": 120552,
+      "episodes_with_children_object_categories": 0,
+      "files": 122,
+      "goals": 3781,
+      "top_level_keys": {
+        "category_to_scene_annotation_category_id": 122,
+        "category_to_task_category_id": 122,
+        "episodes": 122,
+        "goals_by_category": 122
+      },
+      "viewpoints": 884196,
+      "viewpoints_per_goal_avg": 233.8524199947104,
+      "viewpoints_per_goal_max": 2594,
+      "viewpoints_per_goal_min": 1
+    },
+    "val": {
+      "categories": {
+        "bed": 224,
+        "chair": 237,
+        "couch": 237,
+        "potted_plant": 211,
+        "toilet": 148,
+        "tv": 191
+      },
+      "episode_keys": {
+        "additional_obj_config_paths": 1248,
+        "episode_id": 1248,
+        "goals": 1248,
+        "info": 1248,
+        "object_category": 1248,
+        "scene_dataset_config": 1248,
+        "scene_id": 1248,
+        "shortest_paths": 1248,
+        "start_position": 1248,
+        "start_room": 1248,
+        "start_rotation": 1248
+      },
+      "episodes": 1248,
+      "episodes_with_children_object_categories": 0,
+      "files": 42,
+      "goals": 1723,
+      "top_level_keys": {
+        "category_to_scene_annotation_category_id": 42,
+        "category_to_task_category_id": 42,
+        "episodes": 42,
+        "goals_by_category": 42
+      },
+      "viewpoints": 432873,
+      "viewpoints_per_goal_avg": 251.23215322112594,
+      "viewpoints_per_goal_max": 5589,
+      "viewpoints_per_goal_min": 1
+    }
+  },
+  "top_level_keys": {
+    "category_to_scene_annotation_category_id": 164,
+    "category_to_task_category_id": 164,
+    "episodes": 164,
+    "goals_by_category": 164
+  },
+  "totals": {
+    "categories": 6,
+    "episodes": 121800,
+    "episodes_with_children_object_categories": 0,
+    "files": 164,
+    "goals": 5504,
+    "viewpoints": 1317069,
+    "viewpoints_per_goal_avg": 239.29305959302326,
+    "viewpoints_per_goal_max": 5589,
+    "viewpoints_per_goal_min": 1
+  }
+}
