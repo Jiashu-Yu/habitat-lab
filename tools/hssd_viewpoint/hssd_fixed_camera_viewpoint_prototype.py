@@ -47,6 +47,7 @@ MIN_VIEWPOINTS_PER_OBJECT = [1, 3, 5]
 habitat_sim = None
 np = None
 quat_from_two_vectors = None
+quat_from_coeffs = None
 quat_to_coeffs = None
 
 
@@ -501,11 +502,12 @@ def planar_distance_xz(a: Sequence[float], b: Sequence[float]) -> float:
 
 
 def lazy_import_habitat() -> None:
-    global habitat_sim, np, quat_from_two_vectors, quat_to_coeffs
+    global habitat_sim, np, quat_from_two_vectors, quat_from_coeffs, quat_to_coeffs
     if habitat_sim is not None:
         return
     import numpy as np_mod  # noqa: PLC0415
     import habitat_sim as habitat_sim_mod  # noqa: PLC0415
+    from habitat_sim.utils.common import quat_from_coeffs as q_from_coeffs  # noqa: PLC0415
     from habitat_sim.utils.common import (  # noqa: PLC0415
         quat_from_two_vectors as q_from_two_vectors,
     )
@@ -514,6 +516,7 @@ def lazy_import_habitat() -> None:
     np = np_mod
     habitat_sim = habitat_sim_mod
     quat_from_two_vectors = q_from_two_vectors
+    quat_from_coeffs = q_from_coeffs
     quat_to_coeffs = q_to_coeffs
 
 
@@ -597,6 +600,59 @@ def semantic_object_sizes(sem_obj: Any) -> Optional[List[float]]:
     return [float(v) for v in list(sizes)]
 
 
+def semantic_scene_diagnostics(sim: Any) -> Dict[str, Any]:
+    sem_scene = getattr(sim, "semantic_scene", None)
+    if sem_scene is None:
+        return {
+            "semantic_scene_exists": False,
+            "semantic_object_count": 0,
+            "semantic_region_count": 0,
+            "semantic_level_count": 0,
+        }
+    objects = getattr(sem_scene, "objects", None) or []
+    regions = getattr(sem_scene, "regions", None) or []
+    levels = getattr(sem_scene, "levels", None) or []
+    return {
+        "semantic_scene_exists": True,
+        "semantic_object_count": len(objects),
+        "semantic_region_count": len(regions),
+        "semantic_level_count": len(levels),
+    }
+
+
+def semantic_observation_diagnostics(
+    semantic_obs: Any, max_unique: int = 40
+) -> Dict[str, Any]:
+    if semantic_obs is None:
+        return {
+            "semantic_sensor_dtype": None,
+            "semantic_min": None,
+            "semantic_max": None,
+            "semantic_unique_sample": [],
+            "semantic_shape": None,
+        }
+    arr = np.asarray(semantic_obs)
+    if arr.ndim == 3:
+        arr = arr[:, :, 0]
+    if arr.size == 0:
+        return {
+            "semantic_sensor_dtype": str(arr.dtype),
+            "semantic_min": None,
+            "semantic_max": None,
+            "semantic_unique_sample": [],
+            "semantic_shape": list(arr.shape),
+        }
+    unique = np.unique(arr)
+    return {
+        "semantic_sensor_dtype": str(arr.dtype),
+        "semantic_min": int(arr.min()),
+        "semantic_max": int(arr.max()),
+        "semantic_unique_sample": [int(v) for v in unique[:max_unique].tolist()],
+        "semantic_unique_count": int(unique.shape[0]),
+        "semantic_shape": list(arr.shape),
+    }
+
+
 def find_semantic_object(sim: Any, target: Dict[str, Any]) -> Dict[str, Any]:
     center = target.get("object_center_static_approx") or target.get("translation")
     if not center:
@@ -607,7 +663,8 @@ def find_semantic_object(sim: Any, target: Dict[str, Any]) -> Dict[str, Any]:
     best = None
     best_score = float("inf")
     best_info: Dict[str, Any] = {}
-    objects = list(getattr(sim.semantic_scene, "objects", []) or [])
+    sem_scene = getattr(sim, "semantic_scene", None)
+    objects = list(getattr(sem_scene, "objects", []) or [])
     for idx, sem_obj in enumerate(objects):
         if sem_obj is None:
             continue
@@ -637,22 +694,49 @@ def find_semantic_object(sim: Any, target: Dict[str, Any]) -> Dict[str, Any]:
     return best_info
 
 
-def candidate_semantic_ids(sem_obj: Any, sem_obj_index: Optional[int]) -> List[int]:
+def bounded_int_tokens(value: Any, max_abs_value: int = 1_000_000) -> List[int]:
+    ids: List[int] = []
+    # Avoid mining arbitrary digit runs out of HSSD hash-like handles; keep
+    # standalone integer tokens such as "12", "object_12", or UID fields split
+    # by punctuation.
+    for token in re.findall(r"(?<![A-Za-z])-?\d+(?![A-Za-z])", str(value or "")):
+        try:
+            parsed = int(token)
+        except ValueError:
+            continue
+        if abs(parsed) <= max_abs_value and parsed not in ids:
+            ids.append(parsed)
+    return ids
+
+
+def candidate_semantic_ids(
+    obj: Dict[str, Any],
+    sem_obj: Any,
+    sem_obj_index: Optional[int],
+) -> List[int]:
     ids = set()
     if sem_obj_index is not None:
         ids.add(int(sem_obj_index))
-    for attr in ["semantic_id", "object_id", "id"]:
-        value = getattr(sem_obj, attr, None)
-        if value is None:
-            continue
-        if isinstance(value, int):
-            ids.add(value)
-            continue
-        for token in re.findall(r"-?\d+", str(value)):
-            try:
-                ids.add(int(token))
-            except ValueError:
-                pass
+    instance_index = obj.get("instance_index")
+    if isinstance(instance_index, int):
+        ids.add(instance_index)
+        ids.add(instance_index + 1)
+    if sem_obj is not None:
+        for attr in ["semantic_id", "object_id", "id"]:
+            value = getattr(sem_obj, attr, None)
+            if value is None:
+                continue
+            if isinstance(value, int):
+                ids.add(value)
+                continue
+            ids.update(bounded_int_tokens(value))
+    for field in [
+        "object_uid",
+        "template_name",
+        "resolved_metadata_id",
+        "object_name",
+    ]:
+        ids.update(bounded_int_tokens(obj.get(field)))
     return sorted(ids)
 
 
@@ -674,6 +758,92 @@ def snap_navigable(pathfinder: Any, requested: List[float]) -> Tuple[Optional[An
     return snapped, "snapped_navigable"
 
 
+def quaternion_wxyz(q: Any) -> Optional[List[float]]:
+    if q is None:
+        return None
+    for attrs in [("w", "x", "y", "z"), ("real", "x", "y", "z")]:
+        try:
+            vals = [float(getattr(q, attr)) for attr in attrs]
+            if all(math.isfinite(v) for v in vals):
+                return vals
+        except Exception:
+            pass
+    try:
+        coeffs = quat_to_coeffs(q)
+        vals = [float(coeffs[3]), float(coeffs[0]), float(coeffs[1]), float(coeffs[2])]
+        if all(math.isfinite(v) for v in vals):
+            return vals
+    except Exception:
+        return None
+    return None
+
+
+def quaternion_norm(q: Any) -> Optional[float]:
+    vals = quaternion_wxyz(q)
+    if vals is None:
+        return None
+    norm = math.sqrt(sum(v * v for v in vals))
+    return norm if math.isfinite(norm) else None
+
+
+def make_quaternion_wxyz(w: float, x: float, y: float, z: float) -> Any:
+    if hasattr(np, "quaternion"):
+        return np.quaternion(float(w), float(x), float(y), float(z))
+    # Habitat-Sim's quat_from_coeffs convention is [x, y, z, w].
+    return quat_from_coeffs([float(x), float(y), float(z), float(w)])
+
+
+def identity_quaternion() -> Any:
+    try:
+        return make_quaternion_wxyz(1.0, 0.0, 0.0, 0.0)
+    except Exception:
+        return quat_from_two_vectors(habitat_sim.geo.FRONT, habitat_sim.geo.FRONT)
+
+
+def normalize_quaternion(q: Any) -> Tuple[Any, Dict[str, Any]]:
+    """Return a normalized quaternion and diagnostics.
+
+    Habitat-Sim rejects AgentState.rotation if its norm drifts even slightly.
+    This guard normalizes every generated yaw quaternion before set_state and
+    falls back to identity if the input is non-finite or near zero.
+    """
+    norm_before = quaternion_norm(q)
+    diag: Dict[str, Any] = {
+        "rotation_norm_before": norm_before,
+        "rotation_normalized": False,
+        "rotation_fallback_identity": False,
+    }
+    if norm_before is None or norm_before < 1e-8 or not math.isfinite(norm_before):
+        fallback = identity_quaternion()
+        diag["rotation_fallback_identity"] = True
+        diag["rotation_norm_after"] = quaternion_norm(fallback)
+        return fallback, diag
+
+    vals = quaternion_wxyz(q)
+    if vals is None:
+        fallback = identity_quaternion()
+        diag["rotation_fallback_identity"] = True
+        diag["rotation_norm_after"] = quaternion_norm(fallback)
+        return fallback, diag
+
+    normalized = make_quaternion_wxyz(
+        vals[0] / norm_before,
+        vals[1] / norm_before,
+        vals[2] / norm_before,
+        vals[3] / norm_before,
+    )
+    norm_after = quaternion_norm(normalized)
+    if norm_after is None or abs(norm_after - 1.0) > 1e-5:
+        fallback = identity_quaternion()
+        diag["rotation_fallback_identity"] = True
+        diag["rotation_norm_after"] = quaternion_norm(fallback)
+        return fallback, diag
+
+    diag["rotation_normalized"] = True
+    diag["rotation_norm_after"] = norm_after
+    return normalized, diag
+
+
 def yaw_to_face_target(position: Any, target_center: Any):
     view_dir = np.array(target_center, dtype=np.float32) - np.array(position, dtype=np.float32)
     view_dir[1] = 0.0
@@ -681,7 +851,7 @@ def yaw_to_face_target(position: Any, target_center: Any):
     if norm < 1e-6:
         return None
     view_dir /= norm
-    return quat_from_two_vectors(habitat_sim.geo.FRONT, view_dir)
+    return normalize_quaternion(quat_from_two_vectors(habitat_sim.geo.FRONT, view_dir))
 
 
 def count_target_pixels(semantic_obs: Any, semantic_ids: List[int]) -> Dict[str, Any]:
@@ -692,11 +862,15 @@ def count_target_pixels(semantic_obs: Any, semantic_ids: List[int]) -> Dict[str,
     total = int(h * w)
     mask = np.zeros((h, w), dtype=bool)
     per_id: Dict[str, int] = {}
+    best_semantic_id = None
+    best_count = 0
     for sem_id in semantic_ids:
         this_mask = arr == sem_id
         count = int(np.count_nonzero(this_mask))
-        if count > 0:
-            per_id[str(sem_id)] = count
+        per_id[str(sem_id)] = count
+        if count > best_count:
+            best_count = count
+            best_semantic_id = int(sem_id)
         mask |= this_mask
     visible_pixels = int(np.count_nonzero(mask))
     if visible_pixels == 0:
@@ -710,9 +884,13 @@ def count_target_pixels(semantic_obs: Any, semantic_ids: List[int]) -> Dict[str,
         bbox = {"x0": x0, "y0": y0, "x1": x1, "y1": y1, "area": bbox_area}
         fill_fraction = float(visible_pixels / max(1, bbox_area))
     return {
+        "candidate_semantic_ids": semantic_ids,
         "visible_pixel_count": visible_pixels,
+        "visible_pixels": visible_pixels,
         "image_fraction": float(visible_pixels / max(1, total)),
         "semantic_id_pixel_counts": per_id,
+        "pixel_counts_by_semantic_id": per_id,
+        "best_semantic_id": best_semantic_id if best_count > 0 else None,
         "mask_bbox": bbox,
         "mask_bbox_fill_fraction": fill_fraction,
         "mask": mask,
@@ -824,17 +1002,19 @@ def process_object_true(
             "object": obj,
             "mode": "habitat-render",
             "error": "missing_object_center",
+            "semantic_scene_diagnostics": semantic_scene_diagnostics(sim),
             "candidate_results": [],
             "threshold_sweep": {},
         }
 
+    sem_scene_diag = semantic_scene_diagnostics(sim)
     sem_match = find_semantic_object(sim, obj)
     sem_obj = sem_match.pop("semantic_object", None)
     sem_obj_index = sem_match.get("semantic_object_index")
     target_center = (
         sem_match.get("semantic_center") if sem_match.get("semantic_center") else center
     )
-    semantic_ids = candidate_semantic_ids(sem_obj, sem_obj_index) if sem_obj is not None else []
+    semantic_ids = candidate_semantic_ids(obj, sem_obj, sem_obj_index)
 
     candidate_plans = sample_candidate_positions(
         center=center,
@@ -846,78 +1026,107 @@ def process_object_true(
     candidate_results: List[Dict[str, Any]] = []
 
     for plan in candidate_plans:
-        requested = plan["requested_position"]
-        snapped, snap_status = snap_navigable(sim.pathfinder, requested)
         result = dict(plan)
-        result["snap_status"] = snap_status
-        if snapped is None:
-            result["rejected"] = True
-            result["rejection_reason"] = snap_status
+        result["candidate_semantic_ids"] = semantic_ids
+        try:
+            requested = plan["requested_position"]
+            snapped, snap_status = snap_navigable(sim.pathfinder, requested)
+            result["snap_status"] = snap_status
+            if snapped is None:
+                result["rejected"] = True
+                result["rejection_reason"] = snap_status
+                candidate_results.append(result)
+                continue
+
+            rotation_result = yaw_to_face_target(
+                snapped, np.array(target_center, dtype=np.float32)
+            )
+            if rotation_result is None:
+                result["rejected"] = True
+                result["rejection_reason"] = "cannot_compute_yaw_to_target"
+                candidate_results.append(result)
+                continue
+            rotation, rotation_diag = rotation_result
+            result["rotation_diagnostics"] = rotation_diag
+
+            agent_state = habitat_sim.AgentState()
+            agent_state.position = snapped
+            agent_state.rotation = rotation
+            agent.set_state(agent_state)
+            observations = sim.get_sensor_observations()
+            rgb_obs = observations.get("rgb")
+            semantic_obs = observations.get("semantic")
+            semantic_obs_diag = semantic_observation_diagnostics(semantic_obs)
+
+            distance = euclidean(snapped.tolist(), target_center)
+            planar_dist = planar_distance_xz(snapped.tolist(), target_center)
+            if semantic_obs is not None and semantic_ids:
+                visibility = count_target_pixels(semantic_obs, semantic_ids)
+            else:
+                visibility = {
+                    "candidate_semantic_ids": semantic_ids,
+                    "visible_pixel_count": 0,
+                    "visible_pixels": 0,
+                    "image_fraction": 0.0,
+                    "semantic_id_pixel_counts": {},
+                    "pixel_counts_by_semantic_id": {},
+                    "best_semantic_id": None,
+                    "mask_bbox": None,
+                    "mask_bbox_fill_fraction": 0.0,
+                    "mask": None,
+                }
+            mask = visibility.pop("mask", None)
+
+            result.update(
+                {
+                    "navigable_position": snapped.tolist(),
+                    "agent_state": {
+                        "position": snapped.tolist(),
+                        "rotation": quat_to_coeffs(rotation).tolist(),
+                    },
+                    "distance_to_object": float(distance),
+                    "planar_distance_to_object_xz": float(planar_dist),
+                    "semantic_observation_diagnostics": semantic_obs_diag,
+                    "semantic_ids_checked": semantic_ids,
+                    "candidate_semantic_ids": visibility["candidate_semantic_ids"],
+                    "visible_pixel_count": visibility["visible_pixel_count"],
+                    "visible_pixels": visibility["visible_pixels"],
+                    "image_fraction": visibility["image_fraction"],
+                    "semantic_id_pixel_counts": visibility["semantic_id_pixel_counts"],
+                    "pixel_counts_by_semantic_id": visibility["pixel_counts_by_semantic_id"],
+                    "best_semantic_id": visibility["best_semantic_id"],
+                    "mask_bbox": visibility["mask_bbox"],
+                    "coverage_score": visibility["mask_bbox_fill_fraction"],
+                    "iou": None,
+                    "iou_note": (
+                        "not computed in prototype; no projected object "
+                        "extent/reference mask available"
+                    ),
+                }
+            )
+
+            if args.debug_images and rgb_obs is not None and mask is not None:
+                if debug_state["written"] < args.max_debug_images:
+                    paths = write_debug_images(
+                        args.output_dir / "debug_images",
+                        obj["object_uid"],
+                        int(plan["candidate_index"]),
+                        rgb_obs,
+                        mask,
+                    )
+                    result["debug_images"] = paths
+                    debug_state["written"] += 1
+        except Exception as exc:  # noqa: BLE001
+            result.update(
+                {
+                    "candidate_error": repr(exc),
+                    "candidate_traceback": traceback.format_exc(),
+                    "rejected": True,
+                    "rejection_reason": "candidate_exception",
+                }
+            )
             candidate_results.append(result)
             continue
-
-        rotation = yaw_to_face_target(snapped, np.array(target_center, dtype=np.float32))
-        if rotation is None:
-            result["rejected"] = True
-            result["rejection_reason"] = "cannot_compute_yaw_to_target"
-            candidate_results.append(result)
-            continue
-
-        agent_state = habitat_sim.AgentState()
-        agent_state.position = snapped
-        agent_state.rotation = rotation
-        agent.set_state(agent_state)
-        observations = sim.get_sensor_observations()
-        rgb_obs = observations.get("rgb")
-        semantic_obs = observations.get("semantic")
-
-        distance = euclidean(snapped.tolist(), target_center)
-        planar_dist = planar_distance_xz(snapped.tolist(), target_center)
-        visibility = (
-            count_target_pixels(semantic_obs, semantic_ids)
-            if semantic_obs is not None and semantic_ids
-            else {
-                "visible_pixel_count": 0,
-                "image_fraction": 0.0,
-                "semantic_id_pixel_counts": {},
-                "mask_bbox": None,
-                "mask_bbox_fill_fraction": 0.0,
-                "mask": None,
-            }
-        )
-        mask = visibility.pop("mask", None)
-
-        result.update(
-            {
-                "navigable_position": snapped.tolist(),
-                "agent_state": {
-                    "position": snapped.tolist(),
-                    "rotation": quat_to_coeffs(rotation).tolist(),
-                },
-                "distance_to_object": float(distance),
-                "planar_distance_to_object_xz": float(planar_dist),
-                "semantic_ids_checked": semantic_ids,
-                "visible_pixel_count": visibility["visible_pixel_count"],
-                "image_fraction": visibility["image_fraction"],
-                "semantic_id_pixel_counts": visibility["semantic_id_pixel_counts"],
-                "mask_bbox": visibility["mask_bbox"],
-                "coverage_score": visibility["mask_bbox_fill_fraction"],
-                "iou": None,
-                "iou_note": "not computed in prototype; no projected object extent/reference mask available",
-            }
-        )
-
-        if args.debug_images and rgb_obs is not None and mask is not None:
-            if debug_state["written"] < args.max_debug_images:
-                paths = write_debug_images(
-                    args.output_dir / "debug_images",
-                    obj["object_uid"],
-                    int(plan["candidate_index"]),
-                    rgb_obs,
-                    mask,
-                )
-                result["debug_images"] = paths
-                debug_state["written"] += 1
 
         candidate_results.append(result)
 
@@ -925,6 +1134,7 @@ def process_object_true(
         "object": obj,
         "mode": "habitat-render",
         "fixed_camera": fixed_camera_summary(args),
+        "semantic_scene_diagnostics": sem_scene_diag,
         "semantic_match": sem_match,
         "semantic_ids_checked": semantic_ids,
         "candidate_results": candidate_results,
@@ -985,6 +1195,7 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
         "inventory_context": inventory_context,
         "selection_summary": selection_summary,
         "failed_scenes": [],
+        "failed_objects": [],
         "object_results": [],
     }
 
@@ -1003,10 +1214,6 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
         sim = None
         try:
             sim = build_simulator(args, scene_path)
-            for obj in objects:
-                result["object_results"].append(
-                    process_object_true(sim, obj, args, rng, debug_state)
-                )
         except Exception as exc:  # noqa: BLE001
             result["failed_scenes"].append(
                 {
@@ -1016,12 +1223,39 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
                     "traceback": traceback.format_exc(),
                 }
             )
-        finally:
-            if sim is not None:
-                try:
-                    sim.close()
-                except Exception:
-                    pass
+            continue
+
+        for obj in objects:
+            try:
+                result["object_results"].append(
+                    process_object_true(sim, obj, args, rng, debug_state)
+                )
+            except Exception as exc:  # noqa: BLE001
+                failure = {
+                    "scene_id": scene_id,
+                    "scene_path": str(scene_path),
+                    "object_uid": obj.get("object_uid"),
+                    "category": obj.get("category"),
+                    "template_name": obj.get("template_name"),
+                    "exception": repr(exc),
+                    "traceback": traceback.format_exc(),
+                }
+                result["failed_objects"].append(failure)
+                result["object_results"].append(
+                    {
+                        "object": obj,
+                        "mode": "habitat-render",
+                        "error": "object_exception",
+                        "exception": repr(exc),
+                        "candidate_results": [],
+                        "threshold_sweep": {},
+                    }
+                )
+        if sim is not None:
+            try:
+                sim.close()
+            except Exception:
+                pass
 
     result["debug_images_written"] = debug_state["written"]
     return finalize_result(result)
@@ -1042,6 +1276,7 @@ def finalize_result(result: Dict[str, Any]) -> Dict[str, Any]:
     objects_with_any_visible = 0
     rendered_candidates = 0
     candidates_with_visible_pixels = 0
+    candidate_error_count = 0
 
     for obj_result in result["object_results"]:
         obj = obj_result.get("object") or {}
@@ -1056,11 +1291,14 @@ def finalize_result(result: Dict[str, Any]) -> Dict[str, Any]:
         candidates_with_visible_pixels += len(
             [c for c in candidates if (c.get("visible_pixel_count") or 0) > 0]
         )
+        candidate_error_count += len([c for c in candidates if c.get("candidate_error")])
 
     result["summary"] = {
         "objects_processed": len(result["object_results"]),
         "objects_by_category": dict(by_category),
         "failed_scene_count": len(result["failed_scenes"]),
+        "failed_object_count": len(result.get("failed_objects", [])),
+        "candidate_error_count": candidate_error_count,
         "objects_with_any_visible_pixels": objects_with_any_visible,
         "rendered_candidates": rendered_candidates,
         "candidates_with_visible_pixels": candidates_with_visible_pixels,
@@ -1120,9 +1358,24 @@ def build_markdown(result: Dict[str, Any]) -> str:
             "",
             f"- objects processed: {summary['objects_processed']}",
             f"- failed scenes: {summary['failed_scene_count']}",
+            f"- failed objects: {summary['failed_object_count']}",
+            f"- candidate errors: {summary['candidate_error_count']}",
             f"- rendered candidates: {summary['rendered_candidates']}",
             f"- candidates with visible pixels: {summary['candidates_with_visible_pixels']}",
             f"- objects with any visible pixels: {summary['objects_with_any_visible_pixels']}",
+            "",
+            "## JSON Structure",
+            "",
+            "- top-level result key: `object_results`",
+            "- per-object metadata key: `object`",
+            "- per-object candidate list key: `candidate_results`",
+            "- scene initialization/load failures: `failed_scenes`",
+            "- per-object processing failures: `failed_objects`",
+            "- candidate-level failures: `candidate_results[*].candidate_error` and `candidate_results[*].rejection_reason`",
+            "",
+            "## Semantic Diagnostics",
+            "",
+            "Non-dry-run object results include `semantic_scene_diagnostics`. Candidate results include `semantic_observation_diagnostics`, `candidate_semantic_ids`, `pixel_counts_by_semantic_id`, `best_semantic_id`, and `visible_pixels` when rendering reaches the sensor observation step.",
             "",
             "## Threshold Sweep",
             "",
@@ -1141,6 +1394,15 @@ def build_markdown(result: Dict[str, Any]) -> str:
         for failure in result["failed_scenes"][:20]:
             lines.append(
                 f"- `{failure['scene_id']}`: `{failure['exception']}`"
+            )
+        lines.append("")
+
+    if result.get("failed_objects"):
+        lines.extend(["## Failed Objects", ""])
+        for failure in result["failed_objects"][:20]:
+            lines.append(
+                f"- `{failure.get('object_uid')}` ({failure.get('category')}): "
+                f"`{failure.get('exception')}`"
             )
         lines.append("")
 

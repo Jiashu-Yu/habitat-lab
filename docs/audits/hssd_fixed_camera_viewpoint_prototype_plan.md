@@ -126,13 +126,17 @@ For each selected target object:
 2. Use the scene instance translation and metadata dimensions as a static object-center approximation.
 3. In non-dry-run mode, initialize Habitat-Sim for the scene.
 4. Match the static object record to a semantic-scene object by nearest semantic AABB center, with a category-name bonus when available.
+   If `sim.semantic_scene.objects` is empty, continue anyway and rely on candidate semantic-id diagnostics instead of dropping the object.
 5. Sample candidate positions around the object at multiple radii.
 6. Snap candidate positions to the navmesh.
 7. Set agent yaw to face the target center.
+   The yaw quaternion is force-normalized before assigning `AgentState.rotation`; invalid or near-zero quaternions fall back to identity.
 8. Keep camera pitch fixed.
 9. Render RGB and semantic observations.
 10. Count target semantic pixels.
+    Candidate target semantic IDs include semantic-scene object IDs when available, `scene_instance.json` `instance_index`, `instance_index + 1`, and bounded standalone integer tokens parsed from object handles/UIDs.
 11. Compute:
+    - semantic observation diagnostics: dtype, min, max, unique sample, and shape
     - visible pixel count
     - image fraction
     - Euclidean distance to object
@@ -162,10 +166,39 @@ The script writes:
 
 Debug images are always placed below the selected output directory, never in the repo root.
 
+## JSON Structure
+
+The output JSON is intentionally structured for later analysis scripts:
+
+- top-level result key: `object_results`
+- per-object metadata key: `object`
+- per-object candidate list key: `candidate_results`
+- scene initialization/load failures: `failed_scenes`
+- per-object processing failures: `failed_objects`
+- candidate-level failures: `candidate_results[*].candidate_error` and `candidate_results[*].rejection_reason`
+
+Each non-dry-run object result may include:
+
+- `semantic_scene_diagnostics`
+- `semantic_match`
+- `semantic_ids_checked`
+- `threshold_sweep`
+
+Each rendered candidate result may include:
+
+- `rotation_diagnostics`, including `rotation_norm_before`, `rotation_norm_after`, and whether normalization/fallback occurred
+- `semantic_observation_diagnostics`, including `semantic_sensor_dtype`, `semantic_min`, `semantic_max`, `semantic_unique_sample`, and `semantic_unique_count`
+- `candidate_semantic_ids`
+- `pixel_counts_by_semantic_id`
+- `best_semantic_id`
+- `visible_pixels` / `visible_pixel_count`
+
 ## Current Limitations
 
 - Dry-run mode does not prove navigability or visibility.
 - Semantic object matching is a prototype nearest-AABB-center heuristic.
+- If `sim.semantic_scene.objects` is empty, the prototype cannot perform AABB matching, but it still records semantic observation diagnostics for rendered candidates.
+- Candidate semantic ID fallbacks can include IDs that are not the target. Debug images and manual checks remain required before trusting pass/fail visibility thresholds.
 - `iou` is left as `null` because the prototype does not yet compute a projected full-object reference mask.
 - `coverage_score` currently means target-mask fill inside the observed target-mask bounding box.
 - Object center from static metadata is approximate and ignores object rotation.
