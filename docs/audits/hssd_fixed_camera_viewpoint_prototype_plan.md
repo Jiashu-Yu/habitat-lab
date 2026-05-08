@@ -19,6 +19,7 @@ For the target policy/evaluation setup, the action space does not include `look_
 - Prototype script: `tools/hssd_viewpoint/hssd_fixed_camera_viewpoint_prototype.py`
 - Linux wrapper: `tools/hssd_viewpoint/run_fixed_camera_viewpoint_prototype.sh`
 - Static output analyzer: `tools/hssd_viewpoint/analyze_fixed_camera_viewpoint_output.py`
+- Static candidate selector: `tools/hssd_viewpoint/select_fixed_camera_viewpoints.py`
 - Default output directory: `outputs/hssd_fixed_camera_viewpoint_prototype/`
 
 Generated outputs are ignored by git via repo-root `.gitignore`.
@@ -255,3 +256,20 @@ python tools/hssd_viewpoint/analyze_fixed_camera_viewpoint_output.py \
   --input-json outputs/hssd_fixed_camera_viewpoint_prototype/hssd_fixed_camera_viewpoint_prototype.json \
   --output-dir outputs/hssd_fixed_camera_viewpoint_analysis
 ```
+
+After manual review has established filtering rules, select high-quality candidate viewpoints with:
+
+```bash
+python tools/hssd_viewpoint/select_fixed_camera_viewpoints.py \
+  --input-json outputs/hssd_fixed_camera_viewpoint_prototype/hssd_fixed_camera_viewpoint_prototype.json \
+  --output-dir outputs/hssd_fixed_camera_viewpoint_selection \
+  --min-viewpoints-per-object 3
+```
+
+Default selector policy based on the first manual review:
+
+- reject `full_frame_sentinel_mask`
+- reject `near_full_frame_bbox`
+- reject `tiny_sentinel_mask`
+- keep `very_large_sentinel_mask` as manual-review, not accepted by default
+- require at least 1,000 visible pixels, 0.005 image fraction, and distance <= 3.0 m for accepted candidates

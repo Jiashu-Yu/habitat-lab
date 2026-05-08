@@ -33,4 +33,15 @@ python tools/hssd_viewpoint/analyze_fixed_camera_viewpoint_output.py \
 
 The analyzer understands the current schema, `object_results[*].object` plus `object_results[*].candidate_results`, and writes JSON/CSV/Markdown tables for sentinel-positive, heuristic-only, and quality-flagged candidates. When review images are available, the Markdown tables link to review images first and overlay images second.
 
+Use `select_fixed_camera_viewpoints.py` after manual review has established quality rules:
+
+```bash
+python tools/hssd_viewpoint/select_fixed_camera_viewpoints.py \
+  --input-json outputs/hssd_fixed_camera_viewpoint_prototype/hssd_fixed_camera_viewpoint_prototype.json \
+  --output-dir outputs/hssd_fixed_camera_viewpoint_selection \
+  --min-viewpoints-per-object 3
+```
+
+The selector is also static. It classifies candidates as `accepted`, `review`, or `rejected`; full-frame, near-full-frame, and tiny masks are rejected by default, while very-large masks require review by default. It writes per-category and per-object feasibility summaries plus prototype `view_points` records for accepted candidates.
+
 Runtime outputs should go under repo-root `outputs/`, which is ignored by git. Do not commit rendered media, debug images, generated viewpoint shards, or logs.
