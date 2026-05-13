@@ -39,6 +39,16 @@ DEFAULT_CATEGORIES = [
     "vase",
 ]
 
+CATEGORY_FIELD_ORDER = [
+    "condensed_category",
+    "primary_semantic_category",
+    "main_category",
+    "clean_category",
+    "super_category",
+]
+
+INVALID_CATEGORY_VALUES = {"na", "n_a", "none", "nan", "null", "unknown"}
+
 MIN_VISIBLE_PIXELS = [100, 300, 500, 1000]
 MIN_IMAGE_FRACTION = [0.001, 0.003, 0.005, 0.01]
 MAX_DISTANCE = [1.0, 1.5, 2.0, 3.0]
@@ -305,6 +315,15 @@ def load_object_metadata(scene_root: Path) -> Dict[str, Dict[str, Any]]:
         entry = metadata[obj_id]
         entry["id"] = obj_id
         entry["name"] = first_present(row, ["name"])
+        entry["wnsynsetkey"] = first_present(row, ["wnsynsetkey"])
+        entry["found_in"] = first_present(row, ["foundIn"])
+        entry["has_multiple_objects"] = first_present(row, ["hasMultipleObjects"])
+        entry["support"] = first_present(row, ["support"])
+        entry["floorplanner_category_tags"] = first_present(
+            row, ["floorplanner-category-tags"]
+        )
+        entry["is_articulatable"] = first_present(row, ["isArticulatable"])
+        entry["main_wnsynsetkey"] = first_present(row, ["main_wnsynsetkey"])
         entry["main_category"] = normalize_category(first_present(row, ["main_category"]))
         entry["super_category"] = normalize_category(first_present(row, ["super_category"]))
         entry["dims"] = parse_vec3(first_present(row, ["aligned.dims"])) or parse_vec3(
@@ -343,6 +362,23 @@ def load_object_metadata(scene_root: Path) -> Dict[str, Dict[str, Any]]:
                 first_present(row, ["clean_category"])
             )
 
+    objects_json = scene_root / "metadata" / "objects.json"
+    if objects_json.exists():
+        try:
+            for obj_id, info in read_json(objects_json).items():
+                if not isinstance(info, dict):
+                    continue
+                entry = metadata[str(obj_id)]
+                entry["id"] = str(obj_id)
+                if not entry.get("name") and info.get("name"):
+                    entry["name"] = str(info.get("name"))
+                entry["objects_json_name"] = str(info.get("name") or "")
+                entry["object_type"] = str(info.get("type") or "")
+                entry["object_tags"] = info.get("tags") or []
+                entry["scene_counts"] = info.get("scene_counts") or {}
+        except Exception:
+            pass
+
     return dict(metadata)
 
 
@@ -356,18 +392,79 @@ def resolve_metadata(
     return candidates[0] if candidates else "", {}, candidates
 
 
+def valid_category(value: Any) -> str:
+    category = normalize_category(value)
+    if category and category not in INVALID_CATEGORY_VALUES:
+        return category
+    return ""
+
+
+def category_field_values(meta: Dict[str, Any]) -> List[Dict[str, str]]:
+    values: List[Dict[str, str]] = []
+    seen: set[Tuple[str, str]] = set()
+    for field in CATEGORY_FIELD_ORDER:
+        category = valid_category(meta.get(field))
+        if not category:
+            continue
+        key = (field, category)
+        if key in seen:
+            continue
+        values.append({"field": field, "category": category})
+        seen.add(key)
+    return values
+
+
+def category_aliases(meta: Dict[str, Any]) -> List[str]:
+    aliases: List[str] = []
+    for item in category_field_values(meta):
+        category = item["category"]
+        if category not in aliases:
+            aliases.append(category)
+    return aliases
+
+
 def choose_category(meta: Dict[str, Any]) -> Tuple[str, str]:
-    for source in [
-        "condensed_category",
-        "primary_semantic_category",
-        "main_category",
-        "clean_category",
-        "super_category",
-    ]:
-        category = normalize_category(meta.get(source))
-        if category and category not in {"na", "n_a", "none", "nan", "null"}:
-            return category, source
+    for item in category_field_values(meta):
+        return item["category"], item["field"]
     return "unknown", "unresolved"
+
+
+def match_requested_category(
+    meta: Dict[str, Any],
+    requested_categories: set[str],
+) -> Dict[str, Any]:
+    fields = category_field_values(meta)
+    aliases = []
+    for item in fields:
+        category = item["category"]
+        if category not in aliases:
+            aliases.append(category)
+    matches = [
+        item for item in fields if item["category"] in requested_categories
+    ]
+    canonical_category, canonical_source = choose_category(meta)
+    if not matches:
+        return {
+            "matched": False,
+            "category": canonical_category,
+            "category_source": canonical_source,
+            "canonical_category": canonical_category,
+            "canonical_category_source": canonical_source,
+            "category_aliases": aliases,
+            "category_field_values": fields,
+            "matched_category_fields": [],
+        }
+    first = matches[0]
+    return {
+        "matched": True,
+        "category": first["category"],
+        "category_source": first["field"],
+        "canonical_category": canonical_category,
+        "canonical_category_source": canonical_source,
+        "category_aliases": aliases,
+        "category_field_values": fields,
+        "matched_category_fields": matches,
+    }
 
 
 def scaled_dims(
@@ -474,9 +571,10 @@ def collect_target_objects(
                 continue
             template_name = str(instance.get("template_name") or "")
             resolved_id, meta, tried = resolve_metadata(template_name, object_metadata)
-            category, category_source = choose_category(meta)
-            if category not in category_set:
+            category_match = match_requested_category(meta, category_set)
+            if not category_match["matched"]:
                 continue
+            category = category_match["category"]
             if not unlimited_objects and objects_by_category[category] >= max_objects_per_category:
                 skipped_by_category_cap[category] += 1
                 continue
@@ -496,8 +594,35 @@ def collect_target_objects(
                 "resolved_metadata_id": resolved_id,
                 "metadata_lookup_candidates": tried,
                 "category": category,
-                "category_source": category_source,
+                "category_source": category_match["category_source"],
+                "canonical_category": category_match["canonical_category"],
+                "canonical_category_source": category_match[
+                    "canonical_category_source"
+                ],
+                "category_aliases": category_match["category_aliases"],
+                "category_field_values": category_match["category_field_values"],
+                "matched_category_fields": category_match["matched_category_fields"],
+                "condensed_category": valid_category(meta.get("condensed_category")),
+                "primary_semantic_category": valid_category(
+                    meta.get("primary_semantic_category")
+                ),
+                "main_category": valid_category(meta.get("main_category")),
+                "clean_category": valid_category(meta.get("clean_category")),
+                "super_category": valid_category(meta.get("super_category")),
                 "object_name": meta.get("name", ""),
+                "objects_json_name": meta.get("objects_json_name", ""),
+                "object_type": meta.get("object_type", ""),
+                "object_tags": meta.get("object_tags", []),
+                "scene_counts": meta.get("scene_counts", {}),
+                "wnsynsetkey": meta.get("wnsynsetkey", ""),
+                "main_wnsynsetkey": meta.get("main_wnsynsetkey", ""),
+                "found_in": meta.get("found_in", ""),
+                "has_multiple_objects": meta.get("has_multiple_objects", ""),
+                "support": meta.get("support", ""),
+                "floorplanner_category_tags": meta.get(
+                    "floorplanner_category_tags", ""
+                ),
+                "is_articulatable": meta.get("is_articulatable", ""),
                 "translation": translation,
                 "rotation": instance.get("rotation"),
                 "non_uniform_scale": scale,
@@ -1516,17 +1641,28 @@ def make_review_image(
 
     metadata = metadata or {}
     h, w = bright_rgb.shape[:2]
-    header_h = 132
+    header_h = 176
     canvas = Image.new("RGB", (w * 3, h + header_h), color=(245, 245, 245))
     draw = ImageDraw.Draw(canvas)
 
     lines = [
         (
             f"target={metadata.get('category')} "
+            f"source={metadata.get('category_source')} "
+            f"canonical={metadata.get('canonical_category')}/"
+            f"{metadata.get('canonical_category_source')}"
+        ),
+        (
             f"name={truncate_text(metadata.get('object_name'), 42)} "
             f"scene={metadata.get('scene_id')} "
             f"instance={metadata.get('instance_index')} "
             f"candidate={metadata.get('candidate_index')}"
+        ),
+        (
+            f"cats condensed={metadata.get('condensed_category')} "
+            f"primary={metadata.get('primary_semantic_category')} "
+            f"main={metadata.get('main_category')} "
+            f"super={metadata.get('super_category')}"
         ),
         (
             f"visible={metadata.get('visible_pixels')} "
@@ -1537,6 +1673,11 @@ def make_review_image(
             f"distance={metadata.get('distance_to_object')} "
             f"bbox={metadata.get('sentinel_bbox')} "
             f"sentinel={metadata.get('sentinel_semantic_id')}"
+        ),
+        (
+            f"wn={metadata.get('wnsynsetkey')} "
+            f"multi={metadata.get('has_multiple_objects')} "
+            f"articulatable={metadata.get('is_articulatable')}"
         ),
         f"handle={truncate_text(metadata.get('rigid_object_handle'))}",
         f"template={truncate_text(metadata.get('template_name'))}",
@@ -1904,11 +2045,25 @@ def process_object_true(
                     if debug_state["written"] < args.max_debug_images:
                         debug_metadata = {
                             "category": obj.get("category"),
+                            "category_source": obj.get("category_source"),
+                            "canonical_category": obj.get("canonical_category"),
+                            "canonical_category_source": obj.get(
+                                "canonical_category_source"
+                            ),
+                            "condensed_category": obj.get("condensed_category"),
+                            "primary_semantic_category": obj.get(
+                                "primary_semantic_category"
+                            ),
+                            "main_category": obj.get("main_category"),
+                            "super_category": obj.get("super_category"),
                             "scene_id": obj.get("scene_id"),
                             "instance_index": obj.get("instance_index"),
                             "candidate_index": result.get("candidate_index"),
                             "object_name": obj.get("object_name"),
                             "template_name": obj.get("template_name"),
+                            "wnsynsetkey": obj.get("wnsynsetkey"),
+                            "has_multiple_objects": obj.get("has_multiple_objects"),
+                            "is_articulatable": obj.get("is_articulatable"),
                             "rigid_object_handle": resolved_rigid_handle,
                             "sentinel_semantic_id": sentinel_id,
                             "visible_pixels": sentinel_pixels,

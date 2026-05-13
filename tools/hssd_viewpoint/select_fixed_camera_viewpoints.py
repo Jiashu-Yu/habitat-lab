@@ -27,6 +27,57 @@ DEFAULT_REJECT_FLAGS = (
     "tiny_sentinel_mask",
 )
 DEFAULT_REVIEW_FLAGS = ("very_large_sentinel_mask",)
+VISIBLE_PIXEL_KEYS = (
+    "visible_pixels",
+    "visible_pixel_count",
+    "sentinel_visible_pixels",
+    "target_visible_pixels",
+)
+VIS_RATIO_KEYS = (
+    "vis_ratio",
+    "visibility_ratio",
+    "image_fraction",
+    "sentinel_image_fraction",
+    "target_image_fraction",
+)
+BBOX_FRAC_KEYS = (
+    "bbox_frac",
+    "bbox_fraction",
+    "sentinel_bbox_area_fraction",
+    "target_bbox_area_fraction",
+)
+DISTANCE_KEYS = (
+    "distance_to_bbox",
+    "distance_to_object",
+    "bbox_distance",
+    "object_distance",
+)
+OBJECT_METADATA_FIELDS = [
+    "category_source",
+    "canonical_category",
+    "canonical_category_source",
+    "category_aliases",
+    "category_field_values",
+    "matched_category_fields",
+    "condensed_category",
+    "primary_semantic_category",
+    "main_category",
+    "clean_category",
+    "super_category",
+    "resolved_metadata_id",
+    "objects_json_name",
+    "object_type",
+    "object_tags",
+    "wnsynsetkey",
+    "main_wnsynsetkey",
+    "found_in",
+    "has_multiple_objects",
+    "support",
+    "floorplanner_category_tags",
+    "is_articulatable",
+    "metadata_dims",
+    "scaled_dims_static_approx",
+]
 
 
 def parse_args() -> argparse.Namespace:
@@ -115,6 +166,30 @@ def to_int(value: Any, default: int = 0) -> int:
         return default
 
 
+def first_present(data: Dict[str, Any], keys: Tuple[str, ...], default: Any = None) -> Any:
+    for key in keys:
+        value = data.get(key)
+        if value is not None:
+            return value
+    return default
+
+
+def visible_pixels_of(candidate: Dict[str, Any]) -> int:
+    return to_int(first_present(candidate, VISIBLE_PIXEL_KEYS, 0))
+
+
+def vis_ratio_of(candidate: Dict[str, Any]) -> float:
+    return to_float(first_present(candidate, VIS_RATIO_KEYS, 0.0))
+
+
+def bbox_frac_of(candidate: Dict[str, Any]) -> float:
+    return to_float(first_present(candidate, BBOX_FRAC_KEYS, 0.0))
+
+
+def distance_of(candidate: Dict[str, Any], default: float = 999999.0) -> float:
+    return to_float(first_present(candidate, DISTANCE_KEYS, default), default=default)
+
+
 def object_key(obj: Dict[str, Any]) -> str:
     return (
         f"{obj.get('scene_id')}|{obj.get('instance_index')}|"
@@ -135,13 +210,9 @@ def classify_candidate(
         reasons.append(str(candidate.get("rejection_reason") or "candidate_rejected"))
         return "rejected", reasons
 
-    visible_pixels = to_int(
-        candidate.get("visible_pixels", candidate.get("visible_pixel_count", 0))
-    )
-    image_fraction = to_float(
-        candidate.get("image_fraction", candidate.get("sentinel_image_fraction", 0.0))
-    )
-    distance = to_float(candidate.get("distance_to_object"), default=999999.0)
+    visible_pixels = visible_pixels_of(candidate)
+    image_fraction = vis_ratio_of(candidate)
+    distance = distance_of(candidate)
     flags = set(str(f) for f in (candidate.get("sentinel_mask_quality_flags") or []))
     reject_flags = set(args.reject_flags)
     review_flags = set(args.review_flags)
@@ -189,13 +260,11 @@ def flatten_candidate(
     status: str,
     reasons: List[str],
 ) -> Dict[str, Any]:
-    visible_pixels = to_int(
-        candidate.get("visible_pixels", candidate.get("visible_pixel_count", 0))
-    )
-    image_fraction = to_float(
-        candidate.get("image_fraction", candidate.get("sentinel_image_fraction", 0.0))
-    )
-    return {
+    visible_pixels = visible_pixels_of(candidate)
+    image_fraction = vis_ratio_of(candidate)
+    bbox_fraction = bbox_frac_of(candidate)
+    distance = distance_of(candidate, default=0.0)
+    row = {
         "selection_status": status,
         "selection_reasons": reasons,
         "category": obj.get("category"),
@@ -207,10 +276,14 @@ def flatten_candidate(
         "candidate_index": candidate.get("candidate_index"),
         "visible_pixels": visible_pixels,
         "image_fraction": image_fraction,
-        "distance_to_object": candidate.get("distance_to_object"),
+        "vis_ratio": image_fraction,
+        "bbox_fraction": bbox_fraction,
+        "bbox_frac": bbox_fraction,
+        "distance_to_object": distance,
+        "distance_to_bbox": first_present(candidate, ("distance_to_bbox",)),
         "planar_distance_to_object_xz": candidate.get("planar_distance_to_object_xz"),
         "sentinel_bbox": candidate.get("sentinel_bbox"),
-        "sentinel_bbox_area_fraction": candidate.get("sentinel_bbox_area_fraction"),
+        "sentinel_bbox_area_fraction": first_present(candidate, BBOX_FRAC_KEYS),
         "sentinel_mask_quality_flags": candidate.get("sentinel_mask_quality_flags")
         or [],
         "semantic_mapping_status": candidate.get("semantic_mapping_status"),
@@ -221,6 +294,9 @@ def flatten_candidate(
         "debug_overlay_images": debug_paths(candidate, "_overlay.png"),
         "debug_images": candidate.get("debug_images") or [],
     }
+    for field in OBJECT_METADATA_FIELDS:
+        row[field] = obj.get(field)
+    return row
 
 
 def prototype_viewpoint(row: Dict[str, Any]) -> Dict[str, Any]:
@@ -239,10 +315,27 @@ def prototype_viewpoint(row: Dict[str, Any]) -> Dict[str, Any]:
             "candidate_index": row.get("candidate_index"),
             "visible_pixels": row.get("visible_pixels"),
             "image_fraction": row.get("image_fraction"),
+            "vis_ratio": row.get("vis_ratio"),
+            "bbox_frac": row.get("bbox_frac"),
             "distance_to_object": row.get("distance_to_object"),
+            "distance_to_bbox": row.get("distance_to_bbox"),
             "selection_status": row.get("selection_status"),
             "selection_reasons": row.get("selection_reasons"),
             "rigid_object_handle": row.get("rigid_object_handle"),
+            "category_source": row.get("category_source"),
+            "canonical_category": row.get("canonical_category"),
+            "canonical_category_source": row.get("canonical_category_source"),
+            "condensed_category": row.get("condensed_category"),
+            "primary_semantic_category": row.get("primary_semantic_category"),
+            "main_category": row.get("main_category"),
+            "clean_category": row.get("clean_category"),
+            "super_category": row.get("super_category"),
+            "object_name": row.get("object_name"),
+            "objects_json_name": row.get("objects_json_name"),
+            "wnsynsetkey": row.get("wnsynsetkey"),
+            "main_wnsynsetkey": row.get("main_wnsynsetkey"),
+            "has_multiple_objects": row.get("has_multiple_objects"),
+            "is_articulatable": row.get("is_articulatable"),
         },
     }
 
@@ -279,6 +372,8 @@ def aggregate(
                 "accepted_viewpoints": [],
                 "review_viewpoints": [],
             }
+            for field in OBJECT_METADATA_FIELDS:
+                object_records[key][field] = row.get(field)
         record = object_records[key]
         record["candidate_count"] += 1
         record[f"{row['selection_status']}_count"] += 1
@@ -318,6 +413,11 @@ def aggregate(
                 "instance_index": record["instance_index"],
                 "object_name": record["object_name"],
                 "template_name": record["template_name"],
+                **{
+                    field: record.get(field)
+                    for field in OBJECT_METADATA_FIELDS
+                    if record.get(field) is not None
+                },
             },
             "object_status": record["status"],
             "view_points": [prototype_viewpoint(row) for row in selected_rows],
@@ -328,6 +428,7 @@ def aggregate(
         "selection_thresholds": {
             "min_visible_pixels": args.min_visible_pixels,
             "min_image_fraction": args.min_image_fraction,
+            "min_vis_ratio": args.min_image_fraction,
             "max_distance": args.max_distance,
             "max_accepted_image_fraction": args.max_accepted_image_fraction,
             "min_viewpoints_per_object": args.min_viewpoints_per_object,
@@ -355,13 +456,39 @@ def write_candidate_csv(path: Path, rows: List[Dict[str, Any]]) -> None:
         "selection_status",
         "selection_reasons",
         "category",
+        "category_source",
+        "canonical_category",
+        "canonical_category_source",
+        "condensed_category",
+        "primary_semantic_category",
+        "main_category",
+        "clean_category",
+        "super_category",
         "scene_id",
         "instance_index",
+        "object_uid",
         "candidate_index",
+        "object_name",
+        "objects_json_name",
+        "template_name",
+        "resolved_metadata_id",
+        "wnsynsetkey",
+        "main_wnsynsetkey",
+        "has_multiple_objects",
+        "is_articulatable",
+        "floorplanner_category_tags",
         "visible_pixels",
         "image_fraction",
+        "vis_ratio",
+        "bbox_fraction",
+        "bbox_frac",
         "distance_to_object",
+        "distance_to_bbox",
+        "sentinel_bbox_area_fraction",
         "sentinel_mask_quality_flags",
+        "category_aliases",
+        "category_field_values",
+        "matched_category_fields",
         "debug_review_images",
         "debug_overlay_images",
     ]
@@ -403,10 +530,25 @@ def write_object_csv(path: Path, summary: Dict[str, Any]) -> None:
     fields = [
         "status",
         "category",
+        "category_source",
+        "canonical_category",
+        "canonical_category_source",
+        "condensed_category",
+        "primary_semantic_category",
+        "main_category",
+        "clean_category",
+        "super_category",
         "scene_id",
         "instance_index",
         "object_name",
+        "objects_json_name",
         "template_name",
+        "resolved_metadata_id",
+        "wnsynsetkey",
+        "main_wnsynsetkey",
+        "has_multiple_objects",
+        "is_articulatable",
+        "floorplanner_category_tags",
         "candidate_count",
         "accepted_count",
         "review_count",
@@ -428,10 +570,31 @@ def write_object_csv(path: Path, summary: Dict[str, Any]) -> None:
                 {
                     "status": record.get("status"),
                     "category": record.get("category"),
+                    "category_source": record.get("category_source"),
+                    "canonical_category": record.get("canonical_category"),
+                    "canonical_category_source": record.get(
+                        "canonical_category_source"
+                    ),
+                    "condensed_category": record.get("condensed_category"),
+                    "primary_semantic_category": record.get(
+                        "primary_semantic_category"
+                    ),
+                    "main_category": record.get("main_category"),
+                    "clean_category": record.get("clean_category"),
+                    "super_category": record.get("super_category"),
                     "scene_id": record.get("scene_id"),
                     "instance_index": record.get("instance_index"),
                     "object_name": record.get("object_name"),
+                    "objects_json_name": record.get("objects_json_name"),
                     "template_name": record.get("template_name"),
+                    "resolved_metadata_id": record.get("resolved_metadata_id"),
+                    "wnsynsetkey": record.get("wnsynsetkey"),
+                    "main_wnsynsetkey": record.get("main_wnsynsetkey"),
+                    "has_multiple_objects": record.get("has_multiple_objects"),
+                    "is_articulatable": record.get("is_articulatable"),
+                    "floorplanner_category_tags": record.get(
+                        "floorplanner_category_tags"
+                    ),
                     "candidate_count": record.get("candidate_count"),
                     "accepted_count": record.get("accepted_count"),
                     "review_count": record.get("review_count"),
@@ -458,14 +621,19 @@ def format_float(value: Any) -> str:
 
 def candidate_table(rows: List[Dict[str, Any]], top_k: int) -> List[str]:
     lines = [
-        "| status | candidate | visible | frac | dist | reasons | review image |",
-        "|---|---|---:|---:|---:|---|---|",
+        "| status | candidate | visible | vis ratio | bbox frac | dist | reasons | review image |",
+        "|---|---|---:|---:|---:|---:|---|---|",
     ]
     for row in rows[:top_k]:
         label = (
             f"{row.get('category')} scene={row.get('scene_id')} "
-            f"inst={row.get('instance_index')} cand={row.get('candidate_index')}"
+            f"inst={row.get('instance_index')} cand={row.get('candidate_index')} "
+            f"name={row.get('object_name') or row.get('objects_json_name') or ''}"
         )
+        if row.get("canonical_category") and row.get("canonical_category") != row.get(
+            "category"
+        ):
+            label += f" canonical={row.get('canonical_category')}"
         review = "; ".join(row.get("debug_review_images") or row.get("debug_overlay_images") or [])
         lines.append(
             "| "
@@ -474,7 +642,8 @@ def candidate_table(rows: List[Dict[str, Any]], top_k: int) -> List[str]:
                     str(row.get("selection_status")),
                     label,
                     str(row.get("visible_pixels")),
-                    format_float(row.get("image_fraction")),
+                    format_float(row.get("vis_ratio", row.get("image_fraction"))),
+                    format_float(row.get("bbox_frac", row.get("bbox_fraction"))),
                     format_float(row.get("distance_to_object")),
                     ", ".join(row.get("selection_reasons") or []),
                     review,
@@ -573,11 +742,11 @@ def build_markdown(
 
 def object_table(records: List[Dict[str, Any]]) -> List[str]:
     lines = [
-        "| status | category | scene | instance | accepted | review | rejected | review candidates |",
-        "|---|---|---|---:|---:|---:|---:|---|",
+        "| status | category | canonical | primary/main | scene | instance | object name | accepted | review | rejected | review candidates |",
+        "|---|---|---|---|---|---:|---|---:|---:|---:|---|",
     ]
     if not records:
-        lines.append("| none |  |  |  |  |  |  |  |")
+        lines.append("| none |  |  |  |  |  |  |  |  |  |  |")
         return lines
     for record in sorted(
         records,
@@ -594,8 +763,14 @@ def object_table(records: List[Dict[str, Any]]) -> List[str]:
                 [
                     str(record.get("status")),
                     str(record.get("category")),
+                    str(record.get("canonical_category") or ""),
+                    (
+                        f"{record.get('primary_semantic_category') or ''}/"
+                        f"{record.get('main_category') or ''}"
+                    ),
                     str(record.get("scene_id")),
                     str(record.get("instance_index")),
+                    str(record.get("object_name") or record.get("objects_json_name") or ""),
                     str(record.get("accepted_count")),
                     str(record.get("review_count")),
                     str(record.get("rejected_count")),
