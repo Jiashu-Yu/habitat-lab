@@ -329,7 +329,7 @@ def bbox_image_target_path(row: Dict[str, Any], output_dir: Path) -> Path:
         / "images"
         / category
         / status
-        / f"{safe_name(row_image_stem(row))}_bbox.png"
+        / f"{row_image_stem(row)}_bbox.png"
     )
 
 
@@ -343,21 +343,31 @@ def row_image_stem(row: Dict[str, Any]) -> str:
     bbox = f"{bbox_frac(row):.4f}".replace(".", "p")
     sel_dist = f"{distance(row):.3f}".replace(".", "p")
     dist_src = safe_name(row.get("selection_distance_source"), max_len=30)
-    source = Path(text(row.get("image_path"))).name or "image.png"
-    suffix = Path(source).suffix or ".png"
     stem = (
         f"{category}_{status}_scene-{scene}_inst-{instance}_"
         f"cand-{candidate}_frac-{frac}_bbox-{bbox}_seldist-{sel_dist}_{dist_src}"
     )
-    return safe_name(stem)
+    return safe_name(stem, max_len=180)
+
+
+def image_kind_from_path(path: Any) -> str:
+    name = Path(text(path)).name
+    for suffix, kind in [
+        ("_review.png", "review"),
+        ("_overlay.png", "overlay"),
+        ("_rgb.png", "rgb"),
+        ("_mask.png", "mask"),
+    ]:
+        if name.endswith(suffix):
+            return kind
+    return "source"
 
 
 def row_image_subpath(row: Dict[str, Any]) -> Path:
     category = safe_name(row.get("category"))
     status = safe_name(row.get("selection_status"))
-    source = Path(text(row.get("image_path"))).name or "image.png"
-    suffix = Path(source).suffix or ".png"
-    return Path(category) / status / f"{row_image_stem(row)}{suffix}"
+    kind = image_kind_from_path(row.get("image_path"))
+    return Path(category) / status / f"{row_image_stem(row)}_{kind}.png"
 
 
 def parse_bbox(value: Any) -> Optional[Dict[str, int]]:
@@ -439,6 +449,7 @@ def copy_images(
         bbox_dst = bbox_image_target_path(row, output_dir)
         out_row = dict(row)
         out_row["source_image_abs"] = str(src) if image_path else ""
+        out_row["qa_image_type"] = image_kind_from_path(image_path)
         out_row["qa_image"] = str(dst.relative_to(output_dir))
         out_row["qa_image_exists"] = False
         out_row["bbox_source_image_abs"] = ""
@@ -466,6 +477,7 @@ def write_manifest(path: Path, rows: Sequence[Dict[str, Any]]) -> None:
     fields = [
         "qa_image",
         "qa_image_exists",
+        "qa_image_type",
         "qa_pick_reasons",
         "selection_status",
         "selection_reasons",
