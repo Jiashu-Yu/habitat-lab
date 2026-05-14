@@ -209,7 +209,10 @@ def parse_args() -> argparse.Namespace:
         nargs="*",
         type=float,
         default=[0.75, 1.0, 1.5, 2.0, 3.0],
-        help="Candidate sampling radii around object center.",
+        help=(
+            "Candidate sampling offsets from the target BEV bbox surface when "
+            "bbox metadata is available; falls back to radii around object center."
+        ),
     )
     parser.add_argument(
         "--max-debug-images",
@@ -508,6 +511,151 @@ def object_center_from_translation_and_dims(
     return center
 
 
+def yaw_from_quat_wxyz(rotation: Optional[Sequence[float]]) -> Optional[float]:
+    if rotation is None or len(rotation) < 4:
+        return None
+    try:
+        w, x, y, z = [float(v) for v in rotation[:4]]
+    except (TypeError, ValueError):
+        return None
+    norm = math.sqrt(w * w + x * x + y * y + z * z)
+    if norm <= 0.0 or not math.isfinite(norm):
+        return None
+    w, x, y, z = w / norm, x / norm, y / norm, z / norm
+    sin_yaw = 2.0 * (w * y + x * z)
+    cos_yaw = 1.0 - 2.0 * (y * y + z * z)
+    return math.atan2(sin_yaw, cos_yaw)
+
+
+def object_bbox_from_center_and_dims(
+    center: Optional[Sequence[float]],
+    dims: Optional[Sequence[float]],
+    rotation: Optional[Sequence[float]] = None,
+) -> Optional[Dict[str, List[float]]]:
+    if center is None or dims is None:
+        return None
+    if len(center) < 3 or len(dims) < 3:
+        return None
+    sizes = [abs(float(dims[i])) for i in range(3)]
+    if not all(math.isfinite(v) for v in sizes):
+        return None
+    ctr = [float(center[i]) for i in range(3)]
+    yaw = yaw_from_quat_wxyz(rotation)
+    hx, hy, hz = [size * 0.5 for size in sizes]
+    if yaw is None:
+        world_hx, world_hz = hx, hz
+    else:
+        cos_yaw = math.cos(yaw)
+        sin_yaw = math.sin(yaw)
+        world_hx = abs(cos_yaw) * hx + abs(sin_yaw) * hz
+        world_hz = abs(sin_yaw) * hx + abs(cos_yaw) * hz
+    return {
+        "center": ctr,
+        "sizes": sizes,
+        "min": [ctr[0] - world_hx, ctr[1] - hy, ctr[2] - world_hz],
+        "max": [ctr[0] + world_hx, ctr[1] + hy, ctr[2] + world_hz],
+        "yaw_rad": yaw,
+    }
+
+
+def point_to_bbox_distance(
+    point: Optional[Sequence[float]],
+    bbox: Optional[Dict[str, Sequence[float]]],
+    axes: Sequence[int],
+) -> Optional[float]:
+    if point is None or bbox is None:
+        return None
+    bmin = bbox.get("min")
+    bmax = bbox.get("max")
+    if bmin is None or bmax is None:
+        return None
+    if len(point) < 3 or len(bmin) < 3 or len(bmax) < 3:
+        return None
+    yaw = bbox.get("yaw_rad")
+    sizes = bbox.get("sizes")
+    center = bbox.get("center")
+    if yaw is not None and sizes is not None and center is not None:
+        ctr = [float(center[i]) for i in range(3)]
+        half = [abs(float(sizes[i])) * 0.5 for i in range(3)]
+        cos_yaw = math.cos(float(yaw))
+        sin_yaw = math.sin(float(yaw))
+        dx = float(point[0]) - ctr[0]
+        dz = float(point[2]) - ctr[2]
+        local_x = cos_yaw * dx - sin_yaw * dz
+        local_z = sin_yaw * dx + cos_yaw * dz
+        deltas = {
+            0: max(abs(local_x) - half[0], 0.0),
+            1: max(abs(float(point[1]) - ctr[1]) - half[1], 0.0),
+            2: max(abs(local_z) - half[2], 0.0),
+        }
+        return math.sqrt(sum(deltas[axis] ** 2 for axis in axes))
+    squared = 0.0
+    for axis in axes:
+        val = float(point[axis])
+        lo = float(bmin[axis])
+        hi = float(bmax[axis])
+        if val < lo:
+            squared += (lo - val) ** 2
+        elif val > hi:
+            squared += (val - hi) ** 2
+    return math.sqrt(squared)
+
+
+def local_xz_rect_distance(x: float, z: float, half_x: float, half_z: float) -> float:
+    dx = max(abs(float(x)) - float(half_x), 0.0)
+    dz = max(abs(float(z)) - float(half_z), 0.0)
+    return math.sqrt(dx * dx + dz * dz)
+
+
+def point_on_bbox_offset_contour(
+    bbox: Dict[str, Any],
+    angle: float,
+    offset: float,
+) -> Optional[List[float]]:
+    center = bbox.get("center")
+    sizes = bbox.get("sizes")
+    if center is None or sizes is None or len(center) < 3 or len(sizes) < 3:
+        return None
+    half_x = abs(float(sizes[0])) * 0.5
+    half_z = abs(float(sizes[2])) * 0.5
+    if not math.isfinite(half_x) or not math.isfinite(half_z):
+        return None
+
+    direction_x = math.sin(angle)
+    direction_z = math.cos(angle)
+    target_offset = max(float(offset), 0.0)
+    high = max(half_x, half_z, 0.25) + target_offset + 0.25
+    while (
+        local_xz_rect_distance(
+            high * direction_x, high * direction_z, half_x, half_z
+        )
+        < target_offset
+    ):
+        high *= 2.0
+        if high > 1_000.0:
+            return None
+
+    low = 0.0
+    for _ in range(48):
+        mid = (low + high) * 0.5
+        dist = local_xz_rect_distance(
+            mid * direction_x, mid * direction_z, half_x, half_z
+        )
+        if dist < target_offset:
+            low = mid
+        else:
+            high = mid
+
+    local_x = high * direction_x
+    local_z = high * direction_z
+    yaw = float(bbox.get("yaw_rad") or 0.0)
+    cos_yaw = math.cos(yaw)
+    sin_yaw = math.sin(yaw)
+    world_x = float(center[0]) + cos_yaw * local_x + sin_yaw * local_z
+    world_z = float(center[2]) - sin_yaw * local_x + cos_yaw * local_z
+    return [world_x, float(center[1]), world_z]
+
+
 def load_inventory_context(path: Path) -> Dict[str, Any]:
     if not path.exists():
         return {
@@ -680,6 +828,9 @@ def collect_target_objects(
             dims = meta.get("dims") if isinstance(meta.get("dims"), list) else None
             sdims = scaled_dims(dims, scale)
             center = object_center_from_translation_and_dims(translation, sdims)
+            static_bbox = object_bbox_from_center_and_dims(
+                center, sdims, instance.get("rotation")
+            )
             region = region_for_point(center or translation, scene_regions)
             region_label = normalize_category(region.get("label") if region else "")
             region_name = str(region.get("name") or "") if region else ""
@@ -737,6 +888,7 @@ def collect_target_objects(
                 "metadata_dims": dims,
                 "scaled_dims_static_approx": sdims,
                 "object_center_static_approx": center,
+                "object_bbox_static_approx": static_bbox,
             }
             scene_target_objects.append(record)
             objects_by_category[category] += 1
@@ -769,6 +921,7 @@ def sample_candidate_positions(
     samples_per_object: int,
     radii: Sequence[float],
     rng: random.Random,
+    bbox: Optional[Dict[str, Any]] = None,
 ) -> List[Dict[str, Any]]:
     if samples_per_object <= 0:
         return []
@@ -779,15 +932,24 @@ def sample_candidate_positions(
     for idx in range(samples_per_object):
         radius = float(radii[idx % len(radii)])
         angle = angle_offset + 2.0 * math.pi * (idx / float(samples_per_object))
-        position = [
-            center[0] + radius * math.sin(angle),
-            center[1],
-            center[2] + radius * math.cos(angle),
-        ]
+        position = point_on_bbox_offset_contour(bbox, angle, radius) if bbox else None
+        sampling_mode = "bbox_offset_contour" if position is not None else "center_ring"
+        if position is None:
+            position = [
+                center[0] + radius * math.sin(angle),
+                center[1],
+                center[2] + radius * math.cos(angle),
+            ]
         candidates.append(
             {
                 "candidate_index": idx,
                 "radius": radius,
+                "radius_meaning": (
+                    "bbox_surface_offset"
+                    if sampling_mode == "bbox_offset_contour"
+                    else "center_radius"
+                ),
+                "sampling_mode": sampling_mode,
                 "angle_rad": angle,
                 "requested_position": position,
             }
@@ -1785,6 +1947,7 @@ def make_review_image(
         ),
         (
             f"distance={metadata.get('distance_to_object')} "
+            f"bbox_dist={metadata.get('distance_to_bbox')} "
             f"bbox={metadata.get('sentinel_bbox')} "
             f"sentinel={metadata.get('sentinel_semantic_id')}"
         ),
@@ -1877,7 +2040,9 @@ def evaluate_threshold_sweep(candidates: List[Dict[str, Any]]) -> Dict[str, Any]
                 for cand in candidates:
                     visible_pixels = cand.get("visible_pixel_count")
                     image_fraction = cand.get("image_fraction")
-                    distance = cand.get("distance_to_object")
+                    distance = cand.get("distance_to_bbox")
+                    if distance is None:
+                        distance = cand.get("distance_to_object")
                     if visible_pixels is None or image_fraction is None or distance is None:
                         continue
                     if (
@@ -1906,6 +2071,7 @@ def process_object_dry_run(
         samples_per_object=args.samples_per_object,
         radii=args.candidate_radii,
         rng=rng,
+        bbox=obj.get("object_bbox_static_approx"),
     ) if center else []
     return {
         "object": obj,
@@ -1943,6 +2109,10 @@ def process_object_true(
     target_center = (
         sem_match.get("semantic_center") if sem_match.get("semantic_center") else center
     )
+    target_bbox = object_bbox_from_center_and_dims(
+        target_center,
+        sem_match.get("semantic_sizes"),
+    ) or obj.get("object_bbox_static_approx")
     semantic_id_report = candidate_semantic_id_diagnostics(
         obj, sem_obj, sem_obj_index
     )
@@ -1967,6 +2137,7 @@ def process_object_true(
         samples_per_object=args.samples_per_object,
         radii=args.candidate_radii,
         rng=rng,
+        bbox=target_bbox,
     )
     agent = sim.get_agent(0)
     candidate_results: List[Dict[str, Any]] = []
@@ -2013,6 +2184,12 @@ def process_object_true(
 
                 distance = euclidean(snapped.tolist(), target_center)
                 planar_dist = planar_distance_xz(snapped.tolist(), target_center)
+                distance_to_bbox = point_to_bbox_distance(
+                    snapped.tolist(), target_bbox, axes=(0, 1, 2)
+                )
+                planar_distance_to_bbox = point_to_bbox_distance(
+                    snapped.tolist(), target_bbox, axes=(0, 2)
+                )
 
                 if semantic_obs is not None and semantic_ids:
                     heuristic_visibility = count_target_pixels(
@@ -2079,7 +2256,22 @@ def process_object_true(
                             "rotation": quat_to_coeffs(rotation).tolist(),
                         },
                         "distance_to_object": float(distance),
+                        "distance_to_bbox": (
+                            float(planar_distance_to_bbox)
+                            if planar_distance_to_bbox is not None
+                            else None
+                        ),
+                        "euclidean_distance_to_bbox": (
+                            float(distance_to_bbox)
+                            if distance_to_bbox is not None
+                            else None
+                        ),
                         "planar_distance_to_object_xz": float(planar_dist),
+                        "planar_distance_to_bbox_xz": (
+                            float(planar_distance_to_bbox)
+                            if planar_distance_to_bbox is not None
+                            else None
+                        ),
                         "semantic_observation_diagnostics": semantic_obs_diag,
                         "semantic_ids_checked": (
                             [int(sentinel_id)] if sentinel_id is not None else []
@@ -2185,6 +2377,11 @@ def process_object_true(
                             "visible_pixels": sentinel_pixels,
                             "image_fraction": f"{float(result.get('image_fraction') or 0.0):.4f}",
                             "distance_to_object": f"{float(distance):.3f}",
+                            "distance_to_bbox": (
+                                f"{float(planar_distance_to_bbox):.3f}"
+                                if planar_distance_to_bbox is not None
+                                else ""
+                            ),
                             "sentinel_bbox": result.get("sentinel_bbox"),
                             "quality_flags": sentinel_quality_flags,
                         }

@@ -160,7 +160,13 @@ def bbox_frac(row: Dict[str, Any]) -> float:
 
 
 def distance(row: Dict[str, Any]) -> float:
-    return to_float(row.get("distance_to_object"), default=999999.0)
+    return to_float(
+        row.get(
+            "selection_distance",
+            row.get("distance_to_bbox", row.get("distance_to_object")),
+        ),
+        default=999999.0,
+    )
 
 
 def row_label(row: Dict[str, Any]) -> str:
@@ -372,8 +378,12 @@ def write_manifest(path: Path, rows: Sequence[Dict[str, Any]]) -> None:
         "vis_ratio",
         "bbox_fraction",
         "bbox_frac",
+        "selection_distance",
+        "selection_distance_source",
         "distance_to_object",
         "distance_to_bbox",
+        "planar_distance_to_object_xz",
+        "planar_distance_to_bbox_xz",
         "source_image_abs",
     ]
     with path.open("w", newline="", encoding="utf-8") as f:

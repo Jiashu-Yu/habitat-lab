@@ -113,7 +113,15 @@ def parse_args() -> argparse.Namespace:
             "fraction or bbox fraction reaches its threshold."
         ),
     )
-    parser.add_argument("--max-distance", type=float, default=4.0)
+    parser.add_argument(
+        "--max-distance",
+        type=float,
+        default=1.0,
+        help=(
+            "Maximum selection distance. New prototype JSON uses planar "
+            "distance_to_bbox first; older JSON falls back to distance_to_object."
+        ),
+    )
     parser.add_argument(
         "--max-accepted-image-fraction",
         type=float,
@@ -198,8 +206,19 @@ def bbox_frac_of(candidate: Dict[str, Any]) -> float:
     return to_float(first_present(candidate, BBOX_FRAC_KEYS, 0.0))
 
 
+def distance_value_and_key(
+    candidate: Dict[str, Any], default: float = 999999.0
+) -> Tuple[float, str]:
+    for key in DISTANCE_KEYS:
+        value = candidate.get(key)
+        if value is not None:
+            return to_float(value, default=default), key
+    return default, "default"
+
+
 def distance_of(candidate: Dict[str, Any], default: float = 999999.0) -> float:
-    return to_float(first_present(candidate, DISTANCE_KEYS, default), default=default)
+    value, _key = distance_value_and_key(candidate, default=default)
+    return value
 
 
 def object_key(obj: Dict[str, Any]) -> str:
@@ -224,7 +243,7 @@ def classify_candidate(
 
     visible_pixels = visible_pixels_of(candidate)
     image_fraction = vis_ratio_of(candidate)
-    distance = distance_of(candidate)
+    distance, distance_key = distance_value_and_key(candidate)
     flags = set(str(f) for f in (candidate.get("sentinel_mask_quality_flags") or []))
     reject_flags = set(args.reject_flags)
     review_flags = set(args.review_flags)
@@ -250,7 +269,7 @@ def classify_candidate(
         )
         return "rejected", reasons
     if distance > args.max_distance:
-        reasons.append(f"distance>{args.max_distance}")
+        reasons.append(f"{distance_key}>{args.max_distance}")
         return "rejected", reasons
 
     soft_flags = sorted(flags & review_flags)
@@ -282,7 +301,7 @@ def flatten_candidate(
     visible_pixels = visible_pixels_of(candidate)
     image_fraction = vis_ratio_of(candidate)
     bbox_fraction = bbox_frac_of(candidate)
-    distance = distance_of(candidate, default=0.0)
+    distance, distance_key = distance_value_and_key(candidate, default=0.0)
     row = {
         "selection_status": status,
         "selection_reasons": reasons,
@@ -298,9 +317,12 @@ def flatten_candidate(
         "vis_ratio": image_fraction,
         "bbox_fraction": bbox_fraction,
         "bbox_frac": bbox_fraction,
-        "distance_to_object": distance,
+        "selection_distance": distance,
+        "selection_distance_source": distance_key,
+        "distance_to_object": candidate.get("distance_to_object"),
         "distance_to_bbox": first_present(candidate, ("distance_to_bbox",)),
         "planar_distance_to_object_xz": candidate.get("planar_distance_to_object_xz"),
+        "planar_distance_to_bbox_xz": candidate.get("planar_distance_to_bbox_xz"),
         "sentinel_bbox": candidate.get("sentinel_bbox"),
         "sentinel_bbox_area_fraction": first_present(candidate, BBOX_FRAC_KEYS),
         "sentinel_mask_quality_flags": candidate.get("sentinel_mask_quality_flags")
@@ -336,6 +358,8 @@ def prototype_viewpoint(row: Dict[str, Any]) -> Dict[str, Any]:
             "image_fraction": row.get("image_fraction"),
             "vis_ratio": row.get("vis_ratio"),
             "bbox_frac": row.get("bbox_frac"),
+            "selection_distance": row.get("selection_distance"),
+            "selection_distance_source": row.get("selection_distance_source"),
             "distance_to_object": row.get("distance_to_object"),
             "distance_to_bbox": row.get("distance_to_bbox"),
             "selection_status": row.get("selection_status"),
@@ -454,6 +478,10 @@ def aggregate(
             "max_distance": args.max_distance,
             "max_accepted_image_fraction": args.max_accepted_image_fraction,
             "min_viewpoints_per_object": args.min_viewpoints_per_object,
+            "distance_metric": (
+                "first available of distance_to_bbox, distance_to_object, "
+                "bbox_distance, object_distance"
+            ),
             "reject_flags": args.reject_flags,
             "review_flags": args.review_flags,
             "include_review_in_prototype_viewpoints": (
@@ -506,8 +534,12 @@ def write_candidate_csv(path: Path, rows: List[Dict[str, Any]]) -> None:
         "vis_ratio",
         "bbox_fraction",
         "bbox_frac",
+        "selection_distance",
+        "selection_distance_source",
         "distance_to_object",
         "distance_to_bbox",
+        "planar_distance_to_object_xz",
+        "planar_distance_to_bbox_xz",
         "sentinel_bbox_area_fraction",
         "sentinel_mask_quality_flags",
         "category_aliases",
@@ -647,7 +679,7 @@ def format_float(value: Any) -> str:
 
 def candidate_table(rows: List[Dict[str, Any]], top_k: int) -> List[str]:
     lines = [
-        "| status | candidate | visible | vis ratio | bbox frac | dist | reasons | review image |",
+        "| status | candidate | visible | vis ratio | bbox frac | sel dist | reasons | review image |",
         "|---|---|---:|---:|---:|---:|---|---|",
     ]
     for row in rows[:top_k]:
@@ -670,7 +702,7 @@ def candidate_table(rows: List[Dict[str, Any]], top_k: int) -> List[str]:
                     str(row.get("visible_pixels")),
                     format_float(row.get("vis_ratio", row.get("image_fraction"))),
                     format_float(row.get("bbox_frac", row.get("bbox_fraction"))),
-                    format_float(row.get("distance_to_object")),
+                    format_float(row.get("selection_distance")),
                     ", ".join(row.get("selection_reasons") or []),
                     review,
                 ]
