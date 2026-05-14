@@ -27,6 +27,7 @@ DEFAULT_REJECT_FLAGS = (
     "tiny_sentinel_mask",
 )
 DEFAULT_REVIEW_FLAGS: Tuple[str, ...] = ()
+FLOAT_TOLERANCE = 1e-6
 VISIBLE_PIXEL_KEYS = (
     "visible_pixels",
     "visible_pixel_count",
@@ -260,15 +261,15 @@ def classify_candidate(
         return "rejected", reasons
     bbox_fraction = bbox_frac_of(candidate)
     if (
-        image_fraction < args.min_image_fraction
-        and bbox_fraction < args.min_bbox_fraction
+        image_fraction < args.min_image_fraction - FLOAT_TOLERANCE
+        and bbox_fraction < args.min_bbox_fraction - FLOAT_TOLERANCE
     ):
         reasons.append(
             f"image_fraction<{args.min_image_fraction}"
             f"_and_bbox_fraction<{args.min_bbox_fraction}"
         )
         return "rejected", reasons
-    if distance > args.max_distance:
+    if distance > args.max_distance + FLOAT_TOLERANCE:
         reasons.append(f"{distance_key}>{args.max_distance}")
         return "rejected", reasons
 
@@ -276,7 +277,7 @@ def classify_candidate(
     if soft_flags:
         reasons.extend([f"review_flag:{flag}" for flag in soft_flags])
         return "review", reasons
-    if image_fraction >= args.max_accepted_image_fraction:
+    if image_fraction >= args.max_accepted_image_fraction - FLOAT_TOLERANCE:
         reasons.append(f"image_fraction>={args.max_accepted_image_fraction}")
         return "review", reasons
 
