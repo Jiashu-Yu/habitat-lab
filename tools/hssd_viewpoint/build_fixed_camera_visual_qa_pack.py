@@ -24,6 +24,30 @@ DEFAULT_OUTPUT_DIR = Path("outputs/fixed_camera_visual_qa_pack")
 IMAGE_SUFFIX_PRIORITY = ("_review.png", "_overlay.png", "_rgb.png", "_mask.png")
 BBOX_IMAGE_SUFFIX_PRIORITY = ("_overlay.png", "_rgb.png")
 FLOAT_TOLERANCE = 1e-6
+BEV_STATUS_STYLES = {
+    "accepted": ("accepted", (24, 135, 68)),
+    "review": ("review", (230, 145, 25)),
+}
+BEV_REJECT_REASON_ORDER = [
+    "zero_visible",
+    "too_small",
+    "few_pixels",
+    "distance",
+    "mask_large",
+    "tiny_mask",
+    "invalid",
+    "other_reject",
+]
+BEV_REJECT_REASON_STYLES = {
+    "zero_visible": ("reject: zero visible", (72, 72, 72)),
+    "too_small": ("reject: visual too small", (210, 72, 38)),
+    "few_pixels": ("reject: few pixels", (219, 139, 45)),
+    "distance": ("reject: distance", (120, 86, 190)),
+    "mask_large": ("reject: full/large mask", (38, 145, 180)),
+    "tiny_mask": ("reject: tiny mask", (198, 66, 135)),
+    "invalid": ("reject: invalid snap/error", (145, 98, 45)),
+    "other_reject": ("reject: other", (155, 50, 50)),
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -409,6 +433,62 @@ def parse_jsonish(value: Any) -> Any:
     return value
 
 
+def row_selection_reasons(row: Dict[str, Any]) -> List[str]:
+    raw = row.get("selection_reasons")
+    parsed = parse_jsonish(raw)
+    if isinstance(parsed, (list, tuple)):
+        return [text(reason) for reason in parsed if reason is not None]
+    if isinstance(parsed, str):
+        parts = [part.strip() for part in parsed.split(";")]
+        return [part for part in parts if part]
+    reasons_text = text(row.get("selection_reasons_text"))
+    if reasons_text:
+        return [part.strip() for part in reasons_text.split(";") if part.strip()]
+    return []
+
+
+def bev_reason_bucket(row: Dict[str, Any]) -> Tuple[str, str, Tuple[int, int, int]]:
+    status = text(row.get("selection_status"))
+    if status in BEV_STATUS_STYLES:
+        label, color = BEV_STATUS_STYLES[status]
+        return status, label, color
+
+    reasons = row_selection_reasons(row)
+    reason_text = ";".join(reasons)
+    if any(
+        flag in reason_text
+        for flag in ("full_frame_sentinel_mask", "near_full_frame_bbox")
+    ):
+        bucket = "mask_large"
+    elif "tiny_sentinel_mask" in reason_text:
+        bucket = "tiny_mask"
+    elif any(
+        flag in reason_text
+        for flag in ("snap_point_nan", "candidate_error", "nan")
+    ):
+        bucket = "invalid"
+    elif "zero_visible_pixels" in reason_text:
+        bucket = "zero_visible"
+    elif any(
+        marker in reason_text
+        for marker in (
+            "distance_to_bbox>",
+            "distance_to_object>",
+            "bbox_distance>",
+            "object_distance>",
+        )
+    ):
+        bucket = "distance"
+    elif "image_fraction<" in reason_text or "bbox_fraction<" in reason_text:
+        bucket = "too_small"
+    elif "visible_pixels<" in reason_text:
+        bucket = "few_pixels"
+    else:
+        bucket = "other_reject"
+    label, color = BEV_REJECT_REASON_STYLES[bucket]
+    return bucket, label, color
+
+
 def parse_vec3(value: Any) -> Optional[List[float]]:
     parsed = parse_jsonish(value)
     if not isinstance(parsed, (list, tuple)) or len(parsed) < 3:
@@ -539,11 +619,7 @@ def draw_bev_images(
     out_dir = output_dir / "bev"
     out_dir.mkdir(parents=True, exist_ok=True)
     records: List[Dict[str, Any]] = []
-    status_colors = {
-        "accepted": (24, 135, 68),
-        "review": (230, 145, 25),
-        "rejected": (190, 64, 64),
-    }
+    draw_order = BEV_REJECT_REASON_ORDER + ["review", "accepted"]
 
     for key, group in sorted(by_object.items()):
         positions = [(row, row_position(row)) for row in group]
@@ -609,13 +685,19 @@ def draw_bev_images(
             width=4,
         )
 
-        for status in ("rejected", "review", "accepted"):
-            for row, pos in positions:
-                if text(row.get("selection_status")) != status:
-                    continue
+        reason_counts: Counter[str] = Counter()
+        rows_by_bucket: Dict[str, List[Tuple[Dict[str, Any], List[float]]]] = defaultdict(list)
+        for row, pos in positions:
+            bucket, _label, _color = bev_reason_bucket(row)
+            reason_counts[bucket] += 1
+            rows_by_bucket[bucket].append((row, pos))
+
+        for bucket in draw_order:
+            for row, pos in rows_by_bucket.get(bucket, []):
+                _bucket, _label, color = bev_reason_bucket(row)
+                status = text(row.get("selection_status"))
                 px, py = project(pos[0], pos[2])
-                radius = 5 if status == "rejected" else 7
-                color = status_colors.get(status, (80, 80, 80))
+                radius = 7 if status in {"accepted", "review"} else 5
                 draw.ellipse(
                     (px - radius, py - radius, px + radius, py + radius),
                     fill=color,
@@ -633,17 +715,40 @@ def draw_bev_images(
         )
         draw.rectangle((0, 0, width, 58), fill=(255, 255, 255))
         draw.text((16, 12), title, fill=(0, 0, 0))
-        legend_x = 16
-        for label, color in [
-            ("accepted", status_colors["accepted"]),
-            ("review", status_colors["review"]),
-            ("rejected", status_colors["rejected"]),
-            ("bbox", (20, 20, 20)),
-            ("bbox+maxdist", (150, 150, 150)),
-        ]:
-            draw.rectangle((legend_x, height - 36, legend_x + 16, height - 20), fill=color)
-            draw.text((legend_x + 22, height - 38), label, fill=(0, 0, 0))
-            legend_x += 145 if label != "bbox+maxdist" else 190
+        legend_items: List[Tuple[str, Tuple[int, int, int], int]] = []
+        for bucket in ("accepted", "review"):
+            if reason_counts.get(bucket):
+                label, color = BEV_STATUS_STYLES[bucket]
+                legend_items.append((label, color, reason_counts[bucket]))
+        for bucket in BEV_REJECT_REASON_ORDER:
+            if reason_counts.get(bucket):
+                label, color = BEV_REJECT_REASON_STYLES[bucket]
+                legend_items.append((label, color, reason_counts[bucket]))
+        legend_items.extend(
+            [
+                ("bbox", (20, 20, 20), 0),
+                ("bbox+maxdist", (150, 150, 150), 0),
+            ]
+        )
+
+        draw.rectangle((0, height - 124, width, height), fill=(255, 255, 255))
+        legend_x, legend_y = 16, height - 108
+        for label, color, count in legend_items:
+            shown_label = f"{label} ({count})" if count else label
+            try:
+                label_width = int(draw.textlength(shown_label))
+            except Exception:
+                label_width = len(shown_label) * 7
+            item_width = label_width + 48
+            if legend_x + item_width > width - 16:
+                legend_x = 16
+                legend_y += 24
+            draw.rectangle(
+                (legend_x, legend_y + 2, legend_x + 16, legend_y + 18),
+                fill=color,
+            )
+            draw.text((legend_x + 22, legend_y), shown_label, fill=(0, 0, 0))
+            legend_x += item_width
 
         stem = safe_name(
             f"{first.get('category')}_scene-{first.get('scene_id')}_"
@@ -662,6 +767,7 @@ def draw_bev_images(
                 "accepted": counts.get("accepted", 0),
                 "review": counts.get("review", 0),
                 "rejected": counts.get("rejected", 0),
+                "bev_reason_counts": dict(reason_counts),
                 "has_object_bbox": bool(bbox_points),
             }
         )
