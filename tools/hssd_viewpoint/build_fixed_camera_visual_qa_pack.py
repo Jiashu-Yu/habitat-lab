@@ -10,6 +10,7 @@ shards.
 from __future__ import annotations
 
 import argparse
+import ast
 import csv
 import json
 import shutil
@@ -20,6 +21,8 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 DEFAULT_OUTPUT_DIR = Path("outputs/fixed_camera_visual_qa_pack")
 IMAGE_SUFFIX_PRIORITY = ("_review.png", "_overlay.png", "_rgb.png", "_mask.png")
+BBOX_IMAGE_SUFFIX_PRIORITY = ("_overlay.png", "_rgb.png")
+FLOAT_TOLERANCE = 1e-6
 
 
 def parse_args() -> argparse.Namespace:
@@ -131,6 +134,18 @@ def first_image_path(row: Dict[str, Any]) -> str:
             if path.endswith(suffix):
                 return path
     return paths[0] if paths else ""
+
+
+def bbox_source_image_path(row: Dict[str, Any]) -> str:
+    paths: List[str] = []
+    paths.extend(as_list(row.get("debug_overlay_images")))
+    paths.extend(as_list(row.get("debug_images")))
+    paths = list(dict.fromkeys(paths))
+    for suffix in BBOX_IMAGE_SUFFIX_PRIORITY:
+        for path in paths:
+            if path.endswith(suffix):
+                return path
+    return ""
 
 
 def resolve_path(path: str, root: Path) -> Path:
@@ -303,19 +318,113 @@ def choose_balanced_rows(
 
 
 def image_target_path(row: Dict[str, Any], output_dir: Path) -> Path:
+    return output_dir / "images" / text(row_image_subpath(row))
+
+
+def bbox_image_target_path(row: Dict[str, Any], output_dir: Path) -> Path:
+    category = safe_name(row.get("category"))
+    status = safe_name(row.get("selection_status"))
+    return (
+        output_dir
+        / "images"
+        / category
+        / status
+        / f"{safe_name(row_image_stem(row))}_bbox.png"
+    )
+
+
+def row_image_stem(row: Dict[str, Any]) -> str:
     category = safe_name(row.get("category"))
     status = safe_name(row.get("selection_status"))
     scene = safe_name(row.get("scene_id"))
     instance = safe_name(row.get("instance_index"))
     candidate = safe_name(row.get("candidate_index"))
     frac = f"{vis_ratio(row):.4f}".replace(".", "p")
+    bbox = f"{bbox_frac(row):.4f}".replace(".", "p")
+    sel_dist = f"{distance(row):.3f}".replace(".", "p")
+    dist_src = safe_name(row.get("selection_distance_source"), max_len=30)
     source = Path(text(row.get("image_path"))).name or "image.png"
     suffix = Path(source).suffix or ".png"
     stem = (
         f"{category}_{status}_scene-{scene}_inst-{instance}_"
-        f"cand-{candidate}_frac-{frac}"
+        f"cand-{candidate}_frac-{frac}_bbox-{bbox}_seldist-{sel_dist}_{dist_src}"
     )
-    return output_dir / "images" / category / status / f"{safe_name(stem)}{suffix}"
+    return safe_name(stem)
+
+
+def row_image_subpath(row: Dict[str, Any]) -> Path:
+    category = safe_name(row.get("category"))
+    status = safe_name(row.get("selection_status"))
+    source = Path(text(row.get("image_path"))).name or "image.png"
+    suffix = Path(source).suffix or ".png"
+    return Path(category) / status / f"{row_image_stem(row)}{suffix}"
+
+
+def parse_bbox(value: Any) -> Optional[Dict[str, int]]:
+    if value in (None, ""):
+        return None
+    parsed = value
+    if isinstance(value, str):
+        for parser in (json.loads, ast.literal_eval):
+            try:
+                parsed = parser(value)
+                break
+            except Exception:
+                parsed = None
+        if parsed is None:
+            return None
+    if not isinstance(parsed, dict):
+        return None
+    try:
+        return {
+            "x0": int(parsed["x0"]),
+            "y0": int(parsed["y0"]),
+            "x1": int(parsed["x1"]),
+            "y1": int(parsed["y1"]),
+            "area": int(parsed.get("area", 0) or 0),
+        }
+    except Exception:
+        return None
+
+
+def draw_bbox_image(row: Dict[str, Any], root: Path, output_dir: Path) -> Tuple[bool, str]:
+    bbox = parse_bbox(row.get("sentinel_bbox"))
+    source = bbox_source_image_path(row)
+    if bbox is None or not source:
+        return False, source
+
+    src = resolve_path(source, root)
+    if not src.exists():
+        return False, source
+
+    dst = bbox_image_target_path(row, output_dir)
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        from PIL import Image, ImageDraw  # noqa: PLC0415
+
+        image = Image.open(src).convert("RGB")
+        draw = ImageDraw.Draw(image)
+        w, h = image.size
+        x0 = max(0, min(w - 1, bbox["x0"]))
+        y0 = max(0, min(h - 1, bbox["y0"]))
+        x1 = max(0, min(w - 1, bbox["x1"]))
+        y1 = max(0, min(h - 1, bbox["y1"]))
+        line_width = max(2, min(w, h) // 160)
+        draw.rectangle((x0, y0, x1, y1), outline=(255, 230, 0), width=line_width)
+        label = (
+            f"bbox=({x0},{y0})-({x1},{y1}) "
+            f"bbox_frac={bbox_frac(row):.4f} sel_dist={distance(row):.3f}"
+        )
+        text_bbox = draw.textbbox((0, 0), label)
+        label_h = text_bbox[3] - text_bbox[1] + 8
+        label_w = min(w, text_bbox[2] - text_bbox[0] + 10)
+        label_y = max(0, y0 - label_h)
+        draw.rectangle((x0, label_y, min(w - 1, x0 + label_w), label_y + label_h), fill=(0, 0, 0))
+        draw.text((x0 + 5, label_y + 4), label, fill=(255, 230, 0))
+        image.save(dst)
+        return True, source
+    except Exception:
+        return False, source
 
 
 def copy_images(
@@ -327,10 +436,14 @@ def copy_images(
         image_path = text(row.get("image_path"))
         src = resolve_path(image_path, root) if image_path else Path("")
         dst = image_target_path(row, output_dir)
+        bbox_dst = bbox_image_target_path(row, output_dir)
         out_row = dict(row)
         out_row["source_image_abs"] = str(src) if image_path else ""
         out_row["qa_image"] = str(dst.relative_to(output_dir))
         out_row["qa_image_exists"] = False
+        out_row["bbox_source_image_abs"] = ""
+        out_row["qa_bbox_image"] = str(bbox_dst.relative_to(output_dir))
+        out_row["qa_bbox_image_exists"] = False
         if image_path and src.exists():
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src, dst)
@@ -339,6 +452,10 @@ def copy_images(
             missing_count += 1
             if not include_missing:
                 continue
+        bbox_created, bbox_source = draw_bbox_image(row, root, output_dir)
+        if bbox_source:
+            out_row["bbox_source_image_abs"] = str(resolve_path(bbox_source, root))
+        out_row["qa_bbox_image_exists"] = bbox_created
         copied_rows.append(out_row)
     for row in copied_rows:
         row["missing_image_count_for_pack"] = missing_count
@@ -385,6 +502,10 @@ def write_manifest(path: Path, rows: Sequence[Dict[str, Any]]) -> None:
         "planar_distance_to_object_xz",
         "planar_distance_to_bbox_xz",
         "source_image_abs",
+        "bbox_source_image_abs",
+        "qa_bbox_image",
+        "qa_bbox_image_exists",
+        "sentinel_bbox",
     ]
     with path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fields)
@@ -433,6 +554,8 @@ def row_markdown(row: Dict[str, Any]) -> List[str]:
         "",
         md_image(text(row.get("qa_image"))),
         "",
+        md_image(text(row.get("qa_bbox_image")) if row.get("qa_bbox_image_exists") else ""),
+        "",
     ]
 
 
@@ -449,6 +572,11 @@ def write_markdown(path: Path, rows: Sequence[Dict[str, Any]], summary: Dict[str
         f"- selected rows requested: {summary['selected_rows_requested']}",
         f"- copied/image rows in pack: {summary['pack_rows']}",
         f"- missing selected images: {summary['missing_selected_images']}",
+        f"- missing bbox visualizations: {summary['missing_bbox_visualizations']}",
+        f"- accepted distance violations: {summary['accepted_audit']['distance_violations']}",
+        f"- accepted visual-gate violations: {summary['accepted_audit']['visual_gate_violations']}",
+        f"- accepted visible-pixel violations: {summary['accepted_audit']['visible_pixel_violations']}",
+        f"- accepted rows using distance fallback: {summary['accepted_audit']['distance_fallback_rows']}",
         "",
         "## Counts",
         "",
@@ -478,19 +606,116 @@ def write_markdown(path: Path, rows: Sequence[Dict[str, Any]], summary: Dict[str
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def threshold_value(
+    row: Dict[str, Any],
+    selection_summary: Dict[str, Any],
+    row_key: str,
+    summary_key: str,
+    default: float,
+) -> float:
+    value = row.get(row_key)
+    if value is None:
+        value = (selection_summary.get("selection_thresholds") or {}).get(summary_key)
+    return to_float(value, default=default)
+
+
+def accepted_audit(
+    rows: Sequence[Dict[str, Any]],
+    selection_summary: Dict[str, Any],
+) -> Dict[str, Any]:
+    accepted = [row for row in rows if text(row.get("selection_status")) == "accepted"]
+    examples: List[Dict[str, Any]] = []
+    counts = Counter()
+
+    for row in accepted:
+        min_visible = threshold_value(
+            row,
+            selection_summary,
+            "candidate_min_visible_pixels",
+            "min_visible_pixels",
+            300,
+        )
+        min_image = threshold_value(
+            row,
+            selection_summary,
+            "candidate_min_image_fraction",
+            "min_image_fraction",
+            0.10,
+        )
+        min_bbox = threshold_value(
+            row,
+            selection_summary,
+            "candidate_min_bbox_fraction",
+            "min_bbox_fraction",
+            0.10,
+        )
+        max_distance = threshold_value(
+            row,
+            selection_summary,
+            "candidate_max_distance",
+            "max_distance",
+            1.0,
+        )
+
+        row_violations: List[str] = []
+        if to_int(row.get("visible_pixels")) < min_visible:
+            counts["visible_pixel_violations"] += 1
+            row_violations.append("visible_pixels")
+        if vis_ratio(row) < min_image - FLOAT_TOLERANCE and bbox_frac(row) < min_bbox - FLOAT_TOLERANCE:
+            counts["visual_gate_violations"] += 1
+            row_violations.append("visual_gate")
+        if distance(row) > max_distance + FLOAT_TOLERANCE:
+            counts["distance_violations"] += 1
+            row_violations.append("distance")
+        if text(row.get("selection_distance_source")) != "distance_to_bbox":
+            counts["distance_fallback_rows"] += 1
+
+        if row_violations and len(examples) < 20:
+            examples.append(
+                {
+                    "violations": row_violations,
+                    "category": row.get("category"),
+                    "scene_id": row.get("scene_id"),
+                    "instance_index": row.get("instance_index"),
+                    "candidate_index": row.get("candidate_index"),
+                    "vis_ratio": vis_ratio(row),
+                    "bbox_frac": bbox_frac(row),
+                    "selection_distance": distance(row),
+                    "selection_distance_source": row.get("selection_distance_source"),
+                    "threshold_profile": row.get("threshold_profile"),
+                    "candidate_min_image_fraction": min_image,
+                    "candidate_min_bbox_fraction": min_bbox,
+                    "candidate_max_distance": max_distance,
+                    "image_path": row.get("image_path"),
+                }
+            )
+
+    return {
+        "accepted_rows": len(accepted),
+        "distance_violations": counts["distance_violations"],
+        "visual_gate_violations": counts["visual_gate_violations"],
+        "visible_pixel_violations": counts["visible_pixel_violations"],
+        "distance_fallback_rows": counts["distance_fallback_rows"],
+        "violation_examples": examples,
+    }
+
+
 def build_summary(
     selection_json: Path,
+    selection_summary: Dict[str, Any],
     source_rows: Sequence[Dict[str, Any]],
     selected_rows: Sequence[Dict[str, Any]],
     pack_rows: Sequence[Dict[str, Any]],
 ) -> Dict[str, Any]:
     missing = sum(not row.get("qa_image_exists") for row in pack_rows)
+    bbox_missing = sum(not row.get("qa_bbox_image_exists") for row in pack_rows)
     return {
         "selection_json": str(selection_json),
         "source_candidate_rows": len(source_rows),
         "selected_rows_requested": len(selected_rows),
         "pack_rows": len(pack_rows),
         "missing_selected_images": missing,
+        "missing_bbox_visualizations": bbox_missing,
         "status_counts": dict(
             Counter(text(row.get("selection_status")) for row in pack_rows).most_common()
         ),
@@ -504,11 +729,13 @@ def build_summary(
                 for reason in as_list(row.get("qa_pick_reasons"))
             ).most_common()
         ),
+        "accepted_audit": accepted_audit(source_rows, selection_summary),
     }
 
 
 def run(args: argparse.Namespace) -> Dict[str, Any]:
     data = read_json(args.selection_json)
+    selection_summary = data.get("summary") or {}
     source_rows = load_rows(data)
     selected_rows = choose_balanced_rows(source_rows, args)
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -518,7 +745,13 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
         output_dir=args.output_dir,
         include_missing=args.include_missing,
     )
-    summary = build_summary(args.selection_json, source_rows, selected_rows, pack_rows)
+    summary = build_summary(
+        args.selection_json,
+        selection_summary,
+        source_rows,
+        selected_rows,
+        pack_rows,
+    )
     write_manifest(args.output_dir / "fixed_camera_visual_qa_manifest.csv", pack_rows)
     write_markdown(
         args.output_dir / "fixed_camera_visual_qa.md",
