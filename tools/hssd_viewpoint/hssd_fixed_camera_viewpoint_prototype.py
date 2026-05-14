@@ -223,6 +223,15 @@ def parse_args() -> argparse.Namespace:
             "Each saved candidate writes RGB, mask, overlay, and review images."
         ),
     )
+    parser.add_argument(
+        "--disable-checkpoints",
+        action="store_true",
+        help=(
+            "Disable per-scene checkpoint JSON/Markdown writes. By default, "
+            "non-dry-run jobs write checkpoint outputs after each scene so "
+            "long batch runs can recover from native simulator crashes."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -2451,6 +2460,38 @@ def group_objects_by_scene(objects: List[Dict[str, Any]]) -> Dict[str, List[Dict
     return dict(grouped)
 
 
+def write_checkpoint(
+    result: Dict[str, Any],
+    output_dir: Path,
+    scene_id: str,
+    completed_scenes: int,
+    total_scenes: int,
+) -> None:
+    checkpoint = finalize_result(result)
+    checkpoint["checkpoint"] = {
+        "is_checkpoint": True,
+        "last_completed_scene_id": scene_id,
+        "completed_scenes": completed_scenes,
+        "total_scenes": total_scenes,
+        "object_results_written": len(checkpoint.get("object_results") or []),
+    }
+    json_path = output_dir / "hssd_fixed_camera_viewpoint_prototype.checkpoint.json"
+    md_path = output_dir / "hssd_fixed_camera_viewpoint_prototype.checkpoint.md"
+    tmp_json = json_path.with_suffix(json_path.suffix + ".tmp")
+    tmp_md = md_path.with_suffix(md_path.suffix + ".tmp")
+    tmp_json.write_text(json.dumps(checkpoint, indent=2, ensure_ascii=False), encoding="utf-8")
+    tmp_md.write_text(build_markdown(checkpoint), encoding="utf-8")
+    tmp_json.replace(json_path)
+    tmp_md.replace(md_path)
+    print(
+        "Checkpointed "
+        f"scene {completed_scenes}/{total_scenes} ({scene_id}) "
+        f"objects={len(checkpoint.get('object_results') or [])} "
+        f"candidates={checkpoint.get('summary', {}).get('rendered_candidates')}",
+        flush=True,
+    )
+
+
 def run(args: argparse.Namespace) -> Dict[str, Any]:
     rng = random.Random(args.seed)
     categories = parse_categories(args.categories)
@@ -2505,9 +2546,15 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
         return finalize_result(result)
 
     lazy_import_habitat()
-    for scene_id, objects in grouped.items():
+    total_scenes = len(grouped)
+    for scene_idx, (scene_id, objects) in enumerate(grouped.items(), start=1):
         scene_path = Path(objects[0]["scene_path"])
         sim = None
+        print(
+            f"Scene {scene_idx}/{total_scenes} start: {scene_id} "
+            f"objects={len(objects)} path={scene_path}",
+            flush=True,
+        )
         try:
             sim = build_simulator(args, scene_path)
         except Exception as exc:  # noqa: BLE001
@@ -2519,9 +2566,22 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
                     "traceback": traceback.format_exc(),
                 }
             )
+            print(
+                f"Scene {scene_idx}/{total_scenes} failed to initialize: {scene_id} "
+                f"{exc!r}",
+                flush=True,
+            )
+            if not args.disable_checkpoints:
+                write_checkpoint(result, args.output_dir, scene_id, scene_idx, total_scenes)
             continue
 
-        for obj in objects:
+        for obj_idx, obj in enumerate(objects, start=1):
+            print(
+                f"Scene {scene_idx}/{total_scenes} object {obj_idx}/{len(objects)} "
+                f"{obj.get('category')} scene={scene_id} "
+                f"inst={obj.get('instance_index')} name={obj.get('object_name') or obj.get('template_name')}",
+                flush=True,
+            )
             try:
                 result["object_results"].append(
                     process_object_true(sim, obj, args, rng, debug_state)
@@ -2547,13 +2607,26 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
                         "threshold_sweep": {},
                     }
                 )
+                print(
+                    f"Scene {scene_idx}/{total_scenes} object {obj_idx}/{len(objects)} "
+                    f"failed: {exc!r}",
+                    flush=True,
+                )
         if sim is not None:
             try:
                 sim.close()
             except Exception:
                 pass
+        print(
+            f"Scene {scene_idx}/{total_scenes} done: {scene_id} "
+            f"total_objects_done={len(result['object_results'])}",
+            flush=True,
+        )
+        if not args.disable_checkpoints:
+            write_checkpoint(result, args.output_dir, scene_id, scene_idx, total_scenes)
 
     result["debug_images_written"] = debug_state["written"]
+    result.pop("checkpoint", None)
     return finalize_result(result)
 
 
