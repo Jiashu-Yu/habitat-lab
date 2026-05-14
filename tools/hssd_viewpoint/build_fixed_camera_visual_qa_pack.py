@@ -13,6 +13,7 @@ import argparse
 import ast
 import csv
 import json
+import math
 import shutil
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -397,6 +398,276 @@ def parse_bbox(value: Any) -> Optional[Dict[str, int]]:
         return None
 
 
+def parse_jsonish(value: Any) -> Any:
+    if isinstance(value, str):
+        for parser in (json.loads, ast.literal_eval):
+            try:
+                return parser(value)
+            except Exception:
+                pass
+        return None
+    return value
+
+
+def parse_vec3(value: Any) -> Optional[List[float]]:
+    parsed = parse_jsonish(value)
+    if not isinstance(parsed, (list, tuple)) or len(parsed) < 3:
+        return None
+    try:
+        vals = [float(parsed[i]) for i in range(3)]
+    except Exception:
+        return None
+    if not all(math.isfinite(v) for v in vals):
+        return None
+    return vals
+
+
+def row_position(row: Dict[str, Any]) -> Optional[List[float]]:
+    agent_state = parse_jsonish(row.get("agent_state"))
+    if isinstance(agent_state, dict):
+        pos = parse_vec3(agent_state.get("position"))
+        if pos is not None:
+            return pos
+    return parse_vec3(row.get("navigable_position"))
+
+
+def row_object_bbox(row: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    bbox = parse_jsonish(row.get("object_bbox_static_approx"))
+    return bbox if isinstance(bbox, dict) else None
+
+
+def row_max_distance(row: Dict[str, Any], default: float = 1.0) -> float:
+    value = row.get("candidate_max_distance")
+    return to_float(value, default=default)
+
+
+def bbox_frame_xz(
+    bbox: Optional[Dict[str, Any]]
+) -> Optional[Tuple[List[float], float, float, float]]:
+    if not bbox:
+        return None
+    center = parse_vec3(bbox.get("center"))
+    sizes = parse_jsonish(bbox.get("sizes"))
+    yaw = bbox.get("yaw_rad")
+    if center is not None and isinstance(sizes, (list, tuple)) and len(sizes) >= 3:
+        try:
+            hx = abs(float(sizes[0])) * 0.5
+            hz = abs(float(sizes[2])) * 0.5
+            angle = float(yaw) if yaw is not None else 0.0
+        except Exception:
+            hx = hz = None  # type: ignore[assignment]
+        if hx is not None and hz is not None:
+            return center, hx, hz, angle
+    bmin = parse_vec3(bbox.get("min"))
+    bmax = parse_vec3(bbox.get("max"))
+    if bmin is None or bmax is None:
+        return None
+    center = [
+        (bmin[0] + bmax[0]) * 0.5,
+        (bmin[1] + bmax[1]) * 0.5,
+        (bmin[2] + bmax[2]) * 0.5,
+    ]
+    return center, abs(bmax[0] - bmin[0]) * 0.5, abs(bmax[2] - bmin[2]) * 0.5, 0.0
+
+
+def bbox_local_to_world_xz(
+    center: List[float], yaw: float, local_x: float, local_z: float
+) -> Tuple[float, float]:
+    cos_yaw = math.cos(yaw)
+    sin_yaw = math.sin(yaw)
+    world_x = center[0] + cos_yaw * local_x + sin_yaw * local_z
+    world_z = center[2] - sin_yaw * local_x + cos_yaw * local_z
+    return world_x, world_z
+
+
+def bbox_corners_xz(bbox: Optional[Dict[str, Any]]) -> List[Tuple[float, float]]:
+    frame = bbox_frame_xz(bbox)
+    if frame is None:
+        return []
+    center, hx, hz, yaw = frame
+    return [
+        bbox_local_to_world_xz(center, yaw, local_x, local_z)
+        for local_x, local_z in [(-hx, -hz), (hx, -hz), (hx, hz), (-hx, hz)]
+    ]
+
+
+def bbox_distance_contour_xz(
+    bbox: Optional[Dict[str, Any]], distance: float, segments_per_corner: int = 12
+) -> List[Tuple[float, float]]:
+    frame = bbox_frame_xz(bbox)
+    if frame is None:
+        return []
+    center, hx, hz, yaw = frame
+    radius = max(0.0, distance)
+    if radius <= 1e-9:
+        return bbox_corners_xz(bbox)
+
+    points: List[Tuple[float, float]] = []
+    corners = [
+        (hx, hz, 0.0, math.pi * 0.5),
+        (-hx, hz, math.pi * 0.5, math.pi),
+        (-hx, -hz, math.pi, math.pi * 1.5),
+        (hx, -hz, math.pi * 1.5, math.pi * 2.0),
+    ]
+    for corner_x, corner_z, start, end in corners:
+        for idx in range(segments_per_corner + 1):
+            angle = start + (end - start) * idx / segments_per_corner
+            local_x = corner_x + radius * math.cos(angle)
+            local_z = corner_z + radius * math.sin(angle)
+            points.append(bbox_local_to_world_xz(center, yaw, local_x, local_z))
+    return points
+
+
+def draw_polyline(draw: Any, points: List[Tuple[float, float]], fill: Any, width: int) -> None:
+    if len(points) < 2:
+        return
+    draw.line(points + [points[0]], fill=fill, width=width)
+
+
+def draw_bev_images(
+    rows: Sequence[Dict[str, Any]], output_dir: Path
+) -> List[Dict[str, Any]]:
+    try:
+        from PIL import Image, ImageDraw  # noqa: PLC0415
+    except Exception:
+        return []
+
+    by_object: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+    for row in rows:
+        by_object[object_key(row)].append(row)
+
+    out_dir = output_dir / "bev"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    records: List[Dict[str, Any]] = []
+    status_colors = {
+        "accepted": (24, 135, 68),
+        "review": (230, 145, 25),
+        "rejected": (190, 64, 64),
+    }
+
+    for key, group in sorted(by_object.items()):
+        positions = [(row, row_position(row)) for row in group]
+        positions = [(row, pos) for row, pos in positions if pos is not None]
+        bbox = None
+        for row in group:
+            bbox = row_object_bbox(row)
+            if bbox:
+                break
+        max_dist = max((row_max_distance(row) for row in group), default=1.0)
+        bbox_points = bbox_corners_xz(bbox)
+        expanded_bbox_points = bbox_distance_contour_xz(bbox, max_dist)
+
+        xs = [pos[0] for _row, pos in positions]
+        zs = [pos[2] for _row, pos in positions]
+        xs.extend(point[0] for point in bbox_points + expanded_bbox_points)
+        zs.extend(point[1] for point in bbox_points + expanded_bbox_points)
+        if not xs or not zs:
+            continue
+
+        pad_world = max(0.25, max_dist * 0.35)
+        min_x, max_x = min(xs) - pad_world, max(xs) + pad_world
+        min_z, max_z = min(zs) - pad_world, max(zs) + pad_world
+        if abs(max_x - min_x) < 1e-6:
+            min_x -= 0.5
+            max_x += 0.5
+        if abs(max_z - min_z) < 1e-6:
+            min_z -= 0.5
+            max_z += 0.5
+
+        width, height, margin = 900, 900, 70
+        scale = min(
+            (width - 2 * margin) / (max_x - min_x),
+            (height - 2 * margin) / (max_z - min_z),
+        )
+
+        def project(x: float, z: float) -> Tuple[float, float]:
+            px = margin + (x - min_x) * scale
+            py = height - margin - (z - min_z) * scale
+            return px, py
+
+        image = Image.new("RGB", (width, height), "white")
+        draw = ImageDraw.Draw(image)
+        for gx in range(math.floor(min_x), math.ceil(max_x) + 1):
+            x0, y0 = project(float(gx), min_z)
+            x1, y1 = project(float(gx), max_z)
+            draw.line((x0, y0, x1, y1), fill=(235, 235, 235), width=1)
+        for gz in range(math.floor(min_z), math.ceil(max_z) + 1):
+            x0, y0 = project(min_x, float(gz))
+            x1, y1 = project(max_x, float(gz))
+            draw.line((x0, y0, x1, y1), fill=(235, 235, 235), width=1)
+
+        draw_polyline(
+            draw,
+            [project(x, z) for x, z in expanded_bbox_points],
+            fill=(150, 150, 150),
+            width=2,
+        )
+        draw_polyline(
+            draw,
+            [project(x, z) for x, z in bbox_points],
+            fill=(20, 20, 20),
+            width=4,
+        )
+
+        for status in ("rejected", "review", "accepted"):
+            for row, pos in positions:
+                if text(row.get("selection_status")) != status:
+                    continue
+                px, py = project(pos[0], pos[2])
+                radius = 5 if status == "rejected" else 7
+                color = status_colors.get(status, (80, 80, 80))
+                draw.ellipse(
+                    (px - radius, py - radius, px + radius, py + radius),
+                    fill=color,
+                    outline=(255, 255, 255),
+                    width=1,
+                )
+
+        first = group[0]
+        counts = Counter(text(row.get("selection_status")) for row in group)
+        title = (
+            f"{first.get('category')} scene={first.get('scene_id')} "
+            f"inst={first.get('instance_index')} cand={len(group)} "
+            f"acc={counts.get('accepted', 0)} rev={counts.get('review', 0)} "
+            f"rej={counts.get('rejected', 0)} maxdist={max_dist:.2f}m"
+        )
+        draw.rectangle((0, 0, width, 58), fill=(255, 255, 255))
+        draw.text((16, 12), title, fill=(0, 0, 0))
+        legend_x = 16
+        for label, color in [
+            ("accepted", status_colors["accepted"]),
+            ("review", status_colors["review"]),
+            ("rejected", status_colors["rejected"]),
+            ("bbox", (20, 20, 20)),
+            ("bbox+maxdist", (150, 150, 150)),
+        ]:
+            draw.rectangle((legend_x, height - 36, legend_x + 16, height - 20), fill=color)
+            draw.text((legend_x + 22, height - 38), label, fill=(0, 0, 0))
+            legend_x += 145 if label != "bbox+maxdist" else 190
+
+        stem = safe_name(
+            f"{first.get('category')}_scene-{first.get('scene_id')}_"
+            f"inst-{first.get('instance_index')}_bev",
+            max_len=120,
+        )
+        path = out_dir / f"{stem}.png"
+        image.save(path)
+        records.append(
+            {
+                "object_key": key,
+                "category": first.get("category"),
+                "scene_id": first.get("scene_id"),
+                "instance_index": first.get("instance_index"),
+                "bev_image": str(path.relative_to(output_dir)),
+                "accepted": counts.get("accepted", 0),
+                "review": counts.get("review", 0),
+                "rejected": counts.get("rejected", 0),
+                "has_object_bbox": bool(bbox_points),
+            }
+        )
+    return records
+
+
 def draw_bbox_image(row: Dict[str, Any], root: Path, output_dir: Path) -> Tuple[bool, str]:
     bbox = parse_bbox(row.get("sentinel_bbox"))
     source = bbox_source_image_path(row)
@@ -589,6 +860,7 @@ def write_markdown(path: Path, rows: Sequence[Dict[str, Any]], summary: Dict[str
         f"- accepted visual-gate violations: {summary['accepted_audit']['visual_gate_violations']}",
         f"- accepted visible-pixel violations: {summary['accepted_audit']['visible_pixel_violations']}",
         f"- accepted rows using distance fallback: {summary['accepted_audit']['distance_fallback_rows']}",
+        f"- BEV object maps: {summary['bev_map_count']}",
         "",
         "## Counts",
         "",
@@ -614,6 +886,19 @@ def write_markdown(path: Path, rows: Sequence[Dict[str, Any]], summary: Dict[str
         lines.extend(table_header)
         for row in group:
             lines.extend(row_markdown(row))
+
+    if summary.get("bev_maps"):
+        lines.extend(["", "## BEV Candidate Maps", ""])
+        for bev in summary["bev_maps"]:
+            title = (
+                f"{bev.get('category')} scene={bev.get('scene_id')} "
+                f"inst={bev.get('instance_index')} "
+                f"accepted={bev.get('accepted')} review={bev.get('review')} "
+                f"rejected={bev.get('rejected')}"
+            )
+            if not bev.get("has_object_bbox"):
+                title += " (missing object bbox)"
+            lines.extend([f"### {title}", "", md_image(text(bev.get("bev_image"))), ""])
 
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
@@ -718,6 +1003,7 @@ def build_summary(
     source_rows: Sequence[Dict[str, Any]],
     selected_rows: Sequence[Dict[str, Any]],
     pack_rows: Sequence[Dict[str, Any]],
+    bev_maps: Sequence[Dict[str, Any]],
 ) -> Dict[str, Any]:
     missing = sum(not row.get("qa_image_exists") for row in pack_rows)
     bbox_missing = sum(not row.get("qa_bbox_image_exists") for row in pack_rows)
@@ -728,6 +1014,8 @@ def build_summary(
         "pack_rows": len(pack_rows),
         "missing_selected_images": missing,
         "missing_bbox_visualizations": bbox_missing,
+        "bev_map_count": len(bev_maps),
+        "bev_maps": list(bev_maps),
         "status_counts": dict(
             Counter(text(row.get("selection_status")) for row in pack_rows).most_common()
         ),
@@ -757,12 +1045,14 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
         output_dir=args.output_dir,
         include_missing=args.include_missing,
     )
+    bev_maps = draw_bev_images(source_rows, args.output_dir)
     summary = build_summary(
         args.selection_json,
         selection_summary,
         source_rows,
         selected_rows,
         pack_rows,
+        bev_maps,
     )
     write_manifest(args.output_dir / "fixed_camera_visual_qa_manifest.csv", pack_rows)
     write_markdown(
@@ -786,6 +1076,7 @@ def main() -> None:
                 "source_candidate_rows": summary["source_candidate_rows"],
                 "pack_rows": summary["pack_rows"],
                 "missing_selected_images": summary["missing_selected_images"],
+                "bev_map_count": summary["bev_map_count"],
                 "output_dir": str(args.output_dir),
             },
             ensure_ascii=False,

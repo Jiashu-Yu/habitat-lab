@@ -87,8 +87,13 @@ OBJECT_METADATA_FIELDS = [
     "support",
     "floorplanner_category_tags",
     "is_articulatable",
+    "translation",
+    "rotation",
+    "non_uniform_scale",
     "metadata_dims",
     "scaled_dims_static_approx",
+    "object_center_static_approx",
+    "object_bbox_static_approx",
 ]
 
 
@@ -507,6 +512,9 @@ def prototype_viewpoint(row: Dict[str, Any]) -> Dict[str, Any]:
             "super_category": row.get("super_category"),
             "region_label": row.get("region_label"),
             "region_name": row.get("region_name"),
+            "translation": row.get("translation"),
+            "object_center_static_approx": row.get("object_center_static_approx"),
+            "object_bbox_static_approx": row.get("object_bbox_static_approx"),
             "object_name": row.get("object_name"),
             "objects_json_name": row.get("objects_json_name"),
             "wnsynsetkey": row.get("wnsynsetkey"),
@@ -672,6 +680,13 @@ def write_candidate_csv(path: Path, rows: List[Dict[str, Any]]) -> None:
         "has_multiple_objects",
         "is_articulatable",
         "floorplanner_category_tags",
+        "translation",
+        "rotation",
+        "non_uniform_scale",
+        "metadata_dims",
+        "scaled_dims_static_approx",
+        "object_center_static_approx",
+        "object_bbox_static_approx",
         "visible_pixels",
         "image_fraction",
         "vis_ratio",
@@ -754,6 +769,13 @@ def write_object_csv(path: Path, summary: Dict[str, Any]) -> None:
         "has_multiple_objects",
         "is_articulatable",
         "floorplanner_category_tags",
+        "translation",
+        "rotation",
+        "non_uniform_scale",
+        "metadata_dims",
+        "scaled_dims_static_approx",
+        "object_center_static_approx",
+        "object_bbox_static_approx",
         "candidate_count",
         "accepted_count",
         "review_count",
@@ -801,6 +823,25 @@ def write_object_csv(path: Path, summary: Dict[str, Any]) -> None:
                     "is_articulatable": record.get("is_articulatable"),
                     "floorplanner_category_tags": record.get(
                         "floorplanner_category_tags"
+                    ),
+                    "translation": json.dumps(
+                        record.get("translation"), ensure_ascii=False
+                    ),
+                    "rotation": json.dumps(record.get("rotation"), ensure_ascii=False),
+                    "non_uniform_scale": json.dumps(
+                        record.get("non_uniform_scale"), ensure_ascii=False
+                    ),
+                    "metadata_dims": json.dumps(
+                        record.get("metadata_dims"), ensure_ascii=False
+                    ),
+                    "scaled_dims_static_approx": json.dumps(
+                        record.get("scaled_dims_static_approx"), ensure_ascii=False
+                    ),
+                    "object_center_static_approx": json.dumps(
+                        record.get("object_center_static_approx"), ensure_ascii=False
+                    ),
+                    "object_bbox_static_approx": json.dumps(
+                        record.get("object_bbox_static_approx"), ensure_ascii=False
                     ),
                     "candidate_count": record.get("candidate_count"),
                     "accepted_count": record.get("accepted_count"),
