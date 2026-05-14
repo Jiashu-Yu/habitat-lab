@@ -49,6 +49,12 @@ CATEGORY_FIELD_ORDER = [
 
 INVALID_CATEGORY_VALUES = {"na", "n_a", "none", "nan", "null", "unknown"}
 
+DEFAULT_EXCLUDED_REGION_LABELS = [
+    "outdoor",
+    "porch_terrace_deck_driveway",
+    "balcony",
+]
+
 MIN_VISIBLE_PIXELS = [100, 300, 500, 1000]
 MIN_IMAGE_FRACTION = [0.001, 0.003, 0.005, 0.01]
 MAX_DISTANCE = [1.0, 1.5, 2.0, 3.0]
@@ -133,6 +139,17 @@ def parse_args() -> argparse.Namespace:
         help=(
             "Optional scene-instance index filter for targeted retries. "
             "Accepts space-separated values and comma-separated tokens."
+        ),
+    )
+    parser.add_argument(
+        "--exclude-region-labels",
+        nargs="*",
+        default=list(DEFAULT_EXCLUDED_REGION_LABELS),
+        help=(
+            "Region labels to exclude when semantic region annotations are "
+            "available. Defaults remove outdoor/balcony/porch-like target "
+            "objects while preserving indoor objects from mixed scenes. Pass "
+            "the flag with no values to disable this filter."
         ),
     )
     parser.add_argument(
@@ -518,6 +535,84 @@ def scene_id_from_path(path: Path) -> str:
     return path.stem
 
 
+def load_scene_regions(scene_root: Path, scene_id: str) -> List[Dict[str, Any]]:
+    path = scene_root / "semantics" / "scenes" / f"{scene_id}.semantic_config.json"
+    if not path.exists():
+        return []
+    try:
+        data = read_json(path)
+    except Exception:
+        return []
+    regions: List[Dict[str, Any]] = []
+    for item in data.get("region_annotations") or []:
+        if not isinstance(item, dict):
+            continue
+        label = str(item.get("label") or item.get("name") or "")
+        poly = item.get("poly_loop") or []
+        if not label or len(poly) < 3:
+            continue
+        regions.append(
+            {
+                "name": str(item.get("name") or ""),
+                "label": label,
+                "label_normalized": normalize_category(label),
+                "poly_loop": poly,
+                "floor_height": item.get("floor_height"),
+                "extrusion_height": item.get("extrusion_height"),
+                "min_bounds": item.get("min_bounds"),
+                "max_bounds": item.get("max_bounds"),
+            }
+        )
+    return regions
+
+
+def point_in_region_xz(point: Sequence[float], poly_loop: Sequence[Any]) -> bool:
+    x, z = float(point[0]), float(point[2])
+    inside = False
+    vertices: List[Tuple[float, float]] = []
+    for raw in poly_loop:
+        if isinstance(raw, list) and len(raw) >= 3:
+            vertices.append((float(raw[0]), float(raw[2])))
+    if len(vertices) < 3:
+        return False
+    j = len(vertices) - 1
+    for i, (xi, zi) in enumerate(vertices):
+        xj, zj = vertices[j]
+        crosses = (zi > z) != (zj > z)
+        if crosses:
+            x_at_z = (xj - xi) * (z - zi) / ((zj - zi) or 1e-12) + xi
+            if x < x_at_z:
+                inside = not inside
+        j = i
+    return inside
+
+
+def point_in_region_y(point: Sequence[float], region: Dict[str, Any]) -> bool:
+    y = float(point[1])
+    min_bounds = region.get("min_bounds")
+    max_bounds = region.get("max_bounds")
+    if isinstance(min_bounds, list) and len(min_bounds) >= 2:
+        if y < float(min_bounds[1]) - 0.25:
+            return False
+    if isinstance(max_bounds, list) and len(max_bounds) >= 2:
+        if y > float(max_bounds[1]) + 0.25:
+            return False
+    return True
+
+
+def region_for_point(
+    point: Optional[Sequence[float]], regions: Sequence[Dict[str, Any]]
+) -> Dict[str, Any]:
+    if point is None:
+        return {}
+    for region in regions:
+        if not point_in_region_y(point, region):
+            continue
+        if point_in_region_xz(point, region.get("poly_loop") or []):
+            return region
+    return {}
+
+
 def collect_target_objects(
     scene_root: Path,
     scene_dir: str,
@@ -526,6 +621,7 @@ def collect_target_objects(
     max_objects_per_category: int,
     scene_ids: Optional[Sequence[str]] = None,
     instance_indices: Optional[Sequence[int]] = None,
+    exclude_region_labels: Optional[Sequence[str]] = None,
 ) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
     object_metadata = load_object_metadata(scene_root)
     scene_paths = sorted((scene_root / scene_dir).glob("*.scene_instance.json"))
@@ -534,11 +630,13 @@ def collect_target_objects(
     objects_by_category: Counter[str] = Counter()
     scenes_seen_by_category: Dict[str, set] = defaultdict(set)
     skipped_by_category_cap: Counter[str] = Counter()
+    skipped_by_region_label: Counter[str] = Counter()
     scenes_with_targets = 0
 
     category_set = set(categories)
     scene_id_filter = set(scene_ids or [])
     instance_index_filter = set(instance_indices or [])
+    excluded_regions = set(exclude_region_labels or [])
     unlimited_scenes = max_scenes <= 0
     unlimited_objects = max_objects_per_category <= 0
 
@@ -563,6 +661,7 @@ def collect_target_objects(
             continue
 
         scene_target_objects: List[Dict[str, Any]] = []
+        scene_regions = load_scene_regions(scene_root, scene_id)
         instances = scene_data.get("object_instances") or []
         for idx, instance in enumerate(instances):
             if not isinstance(instance, dict):
@@ -575,20 +674,29 @@ def collect_target_objects(
             if not category_match["matched"]:
                 continue
             category = category_match["category"]
-            if not unlimited_objects and objects_by_category[category] >= max_objects_per_category:
-                skipped_by_category_cap[category] += 1
-                continue
 
             translation = parse_vec3(instance.get("translation"))
             scale = parse_vec3(instance.get("non_uniform_scale"))
             dims = meta.get("dims") if isinstance(meta.get("dims"), list) else None
             sdims = scaled_dims(dims, scale)
             center = object_center_from_translation_and_dims(translation, sdims)
+            region = region_for_point(center or translation, scene_regions)
+            region_label = normalize_category(region.get("label") if region else "")
+            region_name = str(region.get("name") or "") if region else ""
+            if region_label and region_label in excluded_regions:
+                skipped_by_region_label[region_label] += 1
+                continue
+            if not unlimited_objects and objects_by_category[category] >= max_objects_per_category:
+                skipped_by_category_cap[category] += 1
+                continue
+
             object_uid = f"{scene_id}:{idx}:{template_name}"
             record = {
                 "object_uid": object_uid,
                 "scene_id": scene_id,
                 "scene_path": str(scene_path),
+                "region_label": region_label,
+                "region_name": region_name,
                 "instance_index": idx,
                 "template_name": template_name,
                 "resolved_metadata_id": resolved_id,
@@ -647,6 +755,8 @@ def collect_target_objects(
         "objects_by_category": dict(objects_by_category),
         "scene_count_by_category": {k: len(v) for k, v in scenes_seen_by_category.items()},
         "skipped_by_category_cap": dict(skipped_by_category_cap),
+        "excluded_region_labels": sorted(excluded_regions),
+        "skipped_by_region_label": dict(skipped_by_region_label),
         "metadata_entries": len(object_metadata),
         "scene_id_filter": sorted(scene_id_filter),
         "instance_index_filter": sorted(instance_index_filter),
@@ -1641,7 +1751,7 @@ def make_review_image(
 
     metadata = metadata or {}
     h, w = bright_rgb.shape[:2]
-    header_h = 176
+    header_h = 198
     canvas = Image.new("RGB", (w * 3, h + header_h), color=(245, 245, 245))
     draw = ImageDraw.Draw(canvas)
 
@@ -1663,6 +1773,10 @@ def make_review_image(
             f"primary={metadata.get('primary_semantic_category')} "
             f"main={metadata.get('main_category')} "
             f"super={metadata.get('super_category')}"
+        ),
+        (
+            f"region={metadata.get('region_label')} "
+            f"name={metadata.get('region_name')}"
         ),
         (
             f"visible={metadata.get('visible_pixels')} "
@@ -2056,6 +2170,8 @@ def process_object_true(
                             ),
                             "main_category": obj.get("main_category"),
                             "super_category": obj.get("super_category"),
+                            "region_label": obj.get("region_label"),
+                            "region_name": obj.get("region_name"),
                             "scene_id": obj.get("scene_id"),
                             "instance_index": obj.get("instance_index"),
                             "candidate_index": result.get("candidate_index"),
@@ -2144,8 +2260,10 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
     args.categories = categories
     scene_ids = parse_string_list(args.scene_ids)
     instance_indices = parse_int_list(args.instance_indices)
+    exclude_region_labels = parse_categories(args.exclude_region_labels)
     args.scene_ids = scene_ids
     args.instance_indices = instance_indices
+    args.exclude_region_labels = exclude_region_labels
     args.output_dir.mkdir(parents=True, exist_ok=True)
     if args.debug_images:
         (args.output_dir / "debug_images").mkdir(parents=True, exist_ok=True)
@@ -2159,6 +2277,7 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
         max_objects_per_category=args.max_objects_per_category,
         scene_ids=scene_ids,
         instance_indices=instance_indices,
+        exclude_region_labels=exclude_region_labels,
     )
 
     result: Dict[str, Any] = {
@@ -2355,6 +2474,8 @@ def build_markdown(result: Dict[str, Any]) -> str:
             f"- metadata entries: {selection['metadata_entries']}",
             f"- objects by category: {selection['objects_by_category']}",
             f"- skipped by category cap: {selection['skipped_by_category_cap']}",
+            f"- excluded region labels: {selection.get('excluded_region_labels', [])}",
+            f"- skipped by region label: {selection.get('skipped_by_region_label', {})}",
             "",
             "## Visibility Summary",
             "",

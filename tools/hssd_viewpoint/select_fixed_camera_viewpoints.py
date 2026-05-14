@@ -26,7 +26,7 @@ DEFAULT_REJECT_FLAGS = (
     "near_full_frame_bbox",
     "tiny_sentinel_mask",
 )
-DEFAULT_REVIEW_FLAGS = ("very_large_sentinel_mask",)
+DEFAULT_REVIEW_FLAGS: Tuple[str, ...] = ()
 VISIBLE_PIXEL_KEYS = (
     "visible_pixels",
     "visible_pixel_count",
@@ -64,6 +64,8 @@ OBJECT_METADATA_FIELDS = [
     "main_category",
     "clean_category",
     "super_category",
+    "region_label",
+    "region_name",
     "resolved_metadata_id",
     "objects_json_name",
     "object_type",
@@ -99,13 +101,23 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_OUTPUT_DIR,
         help="Directory for selection JSON/CSV/Markdown outputs.",
     )
-    parser.add_argument("--min-visible-pixels", type=int, default=1000)
-    parser.add_argument("--min-image-fraction", type=float, default=0.005)
-    parser.add_argument("--max-distance", type=float, default=3.0)
+    parser.add_argument("--min-visible-pixels", type=int, default=300)
+    parser.add_argument("--min-image-fraction", type=float, default=0.10)
+    parser.add_argument(
+        "--min-bbox-fraction",
+        type=float,
+        default=0.10,
+        help=(
+            "Minimum target-mask bbox fraction used as a second visual-size "
+            "signal. A candidate passes the visual-size gate if either image "
+            "fraction or bbox fraction reaches its threshold."
+        ),
+    )
+    parser.add_argument("--max-distance", type=float, default=4.0)
     parser.add_argument(
         "--max-accepted-image-fraction",
         type=float,
-        default=0.50,
+        default=0.90,
         help=(
             "Candidates at or above this fraction are kept for review rather "
             "than accepted by default."
@@ -227,8 +239,15 @@ def classify_candidate(
     if visible_pixels < args.min_visible_pixels:
         reasons.append(f"visible_pixels<{args.min_visible_pixels}")
         return "rejected", reasons
-    if image_fraction < args.min_image_fraction:
-        reasons.append(f"image_fraction<{args.min_image_fraction}")
+    bbox_fraction = bbox_frac_of(candidate)
+    if (
+        image_fraction < args.min_image_fraction
+        and bbox_fraction < args.min_bbox_fraction
+    ):
+        reasons.append(
+            f"image_fraction<{args.min_image_fraction}"
+            f"_and_bbox_fraction<{args.min_bbox_fraction}"
+        )
         return "rejected", reasons
     if distance > args.max_distance:
         reasons.append(f"distance>{args.max_distance}")
@@ -330,6 +349,8 @@ def prototype_viewpoint(row: Dict[str, Any]) -> Dict[str, Any]:
             "main_category": row.get("main_category"),
             "clean_category": row.get("clean_category"),
             "super_category": row.get("super_category"),
+            "region_label": row.get("region_label"),
+            "region_name": row.get("region_name"),
             "object_name": row.get("object_name"),
             "objects_json_name": row.get("objects_json_name"),
             "wnsynsetkey": row.get("wnsynsetkey"),
@@ -429,6 +450,7 @@ def aggregate(
             "min_visible_pixels": args.min_visible_pixels,
             "min_image_fraction": args.min_image_fraction,
             "min_vis_ratio": args.min_image_fraction,
+            "min_bbox_fraction": args.min_bbox_fraction,
             "max_distance": args.max_distance,
             "max_accepted_image_fraction": args.max_accepted_image_fraction,
             "min_viewpoints_per_object": args.min_viewpoints_per_object,
@@ -464,6 +486,8 @@ def write_candidate_csv(path: Path, rows: List[Dict[str, Any]]) -> None:
         "main_category",
         "clean_category",
         "super_category",
+        "region_label",
+        "region_name",
         "scene_id",
         "instance_index",
         "object_uid",
@@ -538,6 +562,8 @@ def write_object_csv(path: Path, summary: Dict[str, Any]) -> None:
         "main_category",
         "clean_category",
         "super_category",
+        "region_label",
+        "region_name",
         "scene_id",
         "instance_index",
         "object_name",

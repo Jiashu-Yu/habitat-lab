@@ -354,6 +354,8 @@ def write_manifest(path: Path, rows: Sequence[Dict[str, Any]]) -> None:
         "primary_semantic_category",
         "main_category",
         "super_category",
+        "region_label",
+        "region_name",
         "scene_id",
         "instance_index",
         "candidate_index",
