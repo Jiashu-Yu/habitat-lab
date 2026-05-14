@@ -27,6 +27,16 @@ DEFAULT_REJECT_FLAGS = (
     "tiny_sentinel_mask",
 )
 DEFAULT_REVIEW_FLAGS: Tuple[str, ...] = ()
+DEFAULT_LOW_SMALL_CATEGORIES = ("toilet", "vase")
+DEFAULT_LOW_SMALL_CANONICAL_CATEGORIES = (
+    "toilet",
+    "vase",
+    "kitchen_lower_cabinet",
+)
+DEFAULT_LOW_SMALL_MIN_IMAGE_FRACTION = 0.03
+DEFAULT_LOW_SMALL_MIN_BBOX_FRACTION = 0.05
+DEFAULT_VASE_MIN_IMAGE_FRACTION = 0.02
+DEFAULT_VASE_MIN_BBOX_FRACTION = 0.035
 FLOAT_TOLERANCE = 1e-6
 VISIBLE_PIXEL_KEYS = (
     "visible_pixels",
@@ -112,6 +122,64 @@ def parse_args() -> argparse.Namespace:
             "Minimum target-mask bbox fraction used as a second visual-size "
             "signal. A candidate passes the visual-size gate if either image "
             "fraction or bbox fraction reaches its threshold."
+        ),
+    )
+    parser.add_argument(
+        "--threshold-profile",
+        choices=("global", "low_small"),
+        default="global",
+        help=(
+            "Use global thresholds for every object, or apply a looser visual "
+            "size gate to configured low/small categories while keeping the "
+            "same distance and mask-quality filters."
+        ),
+    )
+    parser.add_argument(
+        "--low-small-categories",
+        nargs="*",
+        default=list(DEFAULT_LOW_SMALL_CATEGORIES),
+        help=(
+            "Object category labels that use the low_small visual thresholds "
+            "when --threshold-profile low_small is enabled."
+        ),
+    )
+    parser.add_argument(
+        "--low-small-canonical-categories",
+        nargs="*",
+        default=list(DEFAULT_LOW_SMALL_CANONICAL_CATEGORIES),
+        help=(
+            "Canonical category labels that use the low_small visual "
+            "thresholds when --threshold-profile low_small is enabled."
+        ),
+    )
+    parser.add_argument(
+        "--low-small-min-image-fraction",
+        type=float,
+        default=DEFAULT_LOW_SMALL_MIN_IMAGE_FRACTION,
+        help="Minimum image fraction for low_small profile objects.",
+    )
+    parser.add_argument(
+        "--low-small-min-bbox-fraction",
+        type=float,
+        default=DEFAULT_LOW_SMALL_MIN_BBOX_FRACTION,
+        help="Minimum bbox fraction for low_small profile objects.",
+    )
+    parser.add_argument(
+        "--vase-min-image-fraction",
+        type=float,
+        default=DEFAULT_VASE_MIN_IMAGE_FRACTION,
+        help=(
+            "Minimum image fraction for vase objects when "
+            "--threshold-profile low_small is enabled."
+        ),
+    )
+    parser.add_argument(
+        "--vase-min-bbox-fraction",
+        type=float,
+        default=DEFAULT_VASE_MIN_BBOX_FRACTION,
+        help=(
+            "Minimum bbox fraction for vase objects when "
+            "--threshold-profile low_small is enabled."
         ),
     )
     parser.add_argument(
@@ -222,6 +290,52 @@ def distance_of(candidate: Dict[str, Any], default: float = 999999.0) -> float:
     return value
 
 
+def normalized_label(value: Any) -> str:
+    return str(value or "").strip().lower()
+
+
+def normalized_labels(values: Iterable[Any]) -> set[str]:
+    return {normalized_label(value) for value in values if normalized_label(value)}
+
+
+def thresholds_for_object(obj: Dict[str, Any], args: argparse.Namespace) -> Dict[str, Any]:
+    thresholds = {
+        "threshold_profile": "global",
+        "threshold_label": "",
+        "min_visible_pixels": args.min_visible_pixels,
+        "min_image_fraction": args.min_image_fraction,
+        "min_bbox_fraction": args.min_bbox_fraction,
+        "max_distance": args.max_distance,
+        "max_accepted_image_fraction": args.max_accepted_image_fraction,
+    }
+    if args.threshold_profile != "low_small":
+        return thresholds
+
+    category = normalized_label(obj.get("category"))
+    canonical = normalized_label(obj.get("canonical_category"))
+    low_small_categories = normalized_labels(args.low_small_categories)
+    low_small_canonicals = normalized_labels(args.low_small_canonical_categories)
+    if category == "vase" or canonical == "vase":
+        thresholds.update(
+            {
+                "threshold_profile": "low_small",
+                "threshold_label": canonical or category,
+                "min_image_fraction": args.vase_min_image_fraction,
+                "min_bbox_fraction": args.vase_min_bbox_fraction,
+            }
+        )
+    elif category in low_small_categories or canonical in low_small_canonicals:
+        thresholds.update(
+            {
+                "threshold_profile": "low_small",
+                "threshold_label": canonical or category,
+                "min_image_fraction": args.low_small_min_image_fraction,
+                "min_bbox_fraction": args.low_small_min_bbox_fraction,
+            }
+        )
+    return thresholds
+
+
 def object_key(obj: Dict[str, Any]) -> str:
     return (
         f"{obj.get('scene_id')}|{obj.get('instance_index')}|"
@@ -230,6 +344,7 @@ def object_key(obj: Dict[str, Any]) -> str:
 
 
 def classify_candidate(
+    obj: Dict[str, Any],
     candidate: Dict[str, Any],
     args: argparse.Namespace,
 ) -> Tuple[str, List[str]]:
@@ -245,6 +360,7 @@ def classify_candidate(
     visible_pixels = visible_pixels_of(candidate)
     image_fraction = vis_ratio_of(candidate)
     distance, distance_key = distance_value_and_key(candidate)
+    thresholds = thresholds_for_object(obj, args)
     flags = set(str(f) for f in (candidate.get("sentinel_mask_quality_flags") or []))
     reject_flags = set(args.reject_flags)
     review_flags = set(args.review_flags)
@@ -256,29 +372,31 @@ def classify_candidate(
     if visible_pixels <= 0:
         reasons.append("zero_visible_pixels")
         return "rejected", reasons
-    if visible_pixels < args.min_visible_pixels:
-        reasons.append(f"visible_pixels<{args.min_visible_pixels}")
+    if visible_pixels < thresholds["min_visible_pixels"]:
+        reasons.append(f"visible_pixels<{thresholds['min_visible_pixels']}")
         return "rejected", reasons
     bbox_fraction = bbox_frac_of(candidate)
     if (
-        image_fraction < args.min_image_fraction - FLOAT_TOLERANCE
-        and bbox_fraction < args.min_bbox_fraction - FLOAT_TOLERANCE
+        image_fraction < thresholds["min_image_fraction"] - FLOAT_TOLERANCE
+        and bbox_fraction < thresholds["min_bbox_fraction"] - FLOAT_TOLERANCE
     ):
         reasons.append(
-            f"image_fraction<{args.min_image_fraction}"
-            f"_and_bbox_fraction<{args.min_bbox_fraction}"
+            f"image_fraction<{thresholds['min_image_fraction']}"
+            f"_and_bbox_fraction<{thresholds['min_bbox_fraction']}"
         )
         return "rejected", reasons
-    if distance > args.max_distance + FLOAT_TOLERANCE:
-        reasons.append(f"{distance_key}>{args.max_distance}")
+    if distance > thresholds["max_distance"] + FLOAT_TOLERANCE:
+        reasons.append(f"{distance_key}>{thresholds['max_distance']}")
         return "rejected", reasons
 
     soft_flags = sorted(flags & review_flags)
     if soft_flags:
         reasons.extend([f"review_flag:{flag}" for flag in soft_flags])
         return "review", reasons
-    if image_fraction >= args.max_accepted_image_fraction - FLOAT_TOLERANCE:
-        reasons.append(f"image_fraction>={args.max_accepted_image_fraction}")
+    if image_fraction >= thresholds["max_accepted_image_fraction"] - FLOAT_TOLERANCE:
+        reasons.append(
+            f"image_fraction>={thresholds['max_accepted_image_fraction']}"
+        )
         return "review", reasons
 
     reasons.append("passes_quality_filters")
@@ -298,14 +416,18 @@ def flatten_candidate(
     candidate: Dict[str, Any],
     status: str,
     reasons: List[str],
+    args: argparse.Namespace,
 ) -> Dict[str, Any]:
     visible_pixels = visible_pixels_of(candidate)
     image_fraction = vis_ratio_of(candidate)
     bbox_fraction = bbox_frac_of(candidate)
     distance, distance_key = distance_value_and_key(candidate, default=0.0)
+    thresholds = thresholds_for_object(obj, args)
     row = {
         "selection_status": status,
         "selection_reasons": reasons,
+        "threshold_profile": thresholds["threshold_profile"],
+        "threshold_label": thresholds["threshold_label"],
         "category": obj.get("category"),
         "scene_id": obj.get("scene_id"),
         "instance_index": obj.get("instance_index"),
@@ -318,6 +440,10 @@ def flatten_candidate(
         "vis_ratio": image_fraction,
         "bbox_fraction": bbox_fraction,
         "bbox_frac": bbox_fraction,
+        "candidate_min_visible_pixels": thresholds["min_visible_pixels"],
+        "candidate_min_image_fraction": thresholds["min_image_fraction"],
+        "candidate_min_bbox_fraction": thresholds["min_bbox_fraction"],
+        "candidate_max_distance": thresholds["max_distance"],
         "selection_distance": distance,
         "selection_distance_source": distance_key,
         "distance_to_object": candidate.get("distance_to_object"),
@@ -359,6 +485,12 @@ def prototype_viewpoint(row: Dict[str, Any]) -> Dict[str, Any]:
             "image_fraction": row.get("image_fraction"),
             "vis_ratio": row.get("vis_ratio"),
             "bbox_frac": row.get("bbox_frac"),
+            "threshold_profile": row.get("threshold_profile"),
+            "threshold_label": row.get("threshold_label"),
+            "candidate_min_image_fraction": row.get(
+                "candidate_min_image_fraction"
+            ),
+            "candidate_min_bbox_fraction": row.get("candidate_min_bbox_fraction"),
             "selection_distance": row.get("selection_distance"),
             "selection_distance_source": row.get("selection_distance_source"),
             "distance_to_object": row.get("distance_to_object"),
@@ -476,6 +608,15 @@ def aggregate(
             "min_image_fraction": args.min_image_fraction,
             "min_vis_ratio": args.min_image_fraction,
             "min_bbox_fraction": args.min_bbox_fraction,
+            "threshold_profile": args.threshold_profile,
+            "low_small_thresholds": {
+                "categories": args.low_small_categories,
+                "canonical_categories": args.low_small_canonical_categories,
+                "min_image_fraction": args.low_small_min_image_fraction,
+                "min_bbox_fraction": args.low_small_min_bbox_fraction,
+                "vase_min_image_fraction": args.vase_min_image_fraction,
+                "vase_min_bbox_fraction": args.vase_min_bbox_fraction,
+            },
             "max_distance": args.max_distance,
             "max_accepted_image_fraction": args.max_accepted_image_fraction,
             "min_viewpoints_per_object": args.min_viewpoints_per_object,
@@ -506,6 +647,8 @@ def write_candidate_csv(path: Path, rows: List[Dict[str, Any]]) -> None:
     fields = [
         "selection_status",
         "selection_reasons",
+        "threshold_profile",
+        "threshold_label",
         "category",
         "category_source",
         "canonical_category",
@@ -535,6 +678,10 @@ def write_candidate_csv(path: Path, rows: List[Dict[str, Any]]) -> None:
         "vis_ratio",
         "bbox_fraction",
         "bbox_frac",
+        "candidate_min_visible_pixels",
+        "candidate_min_image_fraction",
+        "candidate_min_bbox_fraction",
+        "candidate_max_distance",
         "selection_distance",
         "selection_distance_source",
         "distance_to_object",
@@ -641,6 +788,8 @@ def write_object_csv(path: Path, summary: Dict[str, Any]) -> None:
                     "main_category": record.get("main_category"),
                     "clean_category": record.get("clean_category"),
                     "super_category": record.get("super_category"),
+                    "region_label": record.get("region_label"),
+                    "region_name": record.get("region_name"),
                     "scene_id": record.get("scene_id"),
                     "instance_index": record.get("instance_index"),
                     "object_name": record.get("object_name"),
@@ -846,8 +995,8 @@ def main() -> None:
     data = load_json(args.input_json)
     rows: List[Dict[str, Any]] = []
     for obj, candidate in iter_rows(data):
-        status, reasons = classify_candidate(candidate, args)
-        rows.append(flatten_candidate(obj, candidate, status, reasons))
+        status, reasons = classify_candidate(obj, candidate, args)
+        rows.append(flatten_candidate(obj, candidate, status, reasons, args))
 
     summary = aggregate(data, rows, args)
 
