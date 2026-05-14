@@ -339,7 +339,37 @@ def choose_balanced_rows(
             text(row.get("candidate_index")),
         )
     )
-    return selected_rows[: args.max_total_images]
+    if len(selected_rows) <= args.max_total_images:
+        return selected_rows
+
+    # Keep the hard cap category-balanced. Large runs can add many
+    # failing-object diagnostics from alphabetically early categories; a plain
+    # sorted slice would starve later categories even though they are present.
+    by_category: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+    for row in selected_rows:
+        by_category[text(row.get("category")) or "unknown"].append(row)
+    capped: List[Dict[str, Any]] = []
+    categories = sorted(by_category)
+    while len(capped) < args.max_total_images:
+        added_this_round = False
+        for category in categories:
+            bucket = by_category[category]
+            if not bucket:
+                continue
+            capped.append(bucket.pop(0))
+            added_this_round = True
+            if len(capped) >= args.max_total_images:
+                break
+        if not added_this_round:
+            break
+    return capped
+
+
+def row_has_existing_image(row: Dict[str, Any], root: Path) -> bool:
+    image_path = text(row.get("image_path"))
+    if not image_path:
+        return False
+    return resolve_path(image_path, root).exists()
 
 
 def image_target_path(row: Dict[str, Any], output_dir: Path) -> Path:
@@ -1143,7 +1173,15 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
     data = read_json(args.selection_json)
     selection_summary = data.get("summary") or {}
     source_rows = load_rows(data)
-    selected_rows = choose_balanced_rows(source_rows, args)
+    image_available_rows = [
+        row for row in source_rows if row_has_existing_image(row, args.path_root)
+    ]
+    sampling_rows = (
+        source_rows
+        if args.include_missing or not image_available_rows
+        else image_available_rows
+    )
+    selected_rows = choose_balanced_rows(sampling_rows, args)
     args.output_dir.mkdir(parents=True, exist_ok=True)
     pack_rows = copy_images(
         selected_rows,
@@ -1159,6 +1197,10 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
         selected_rows,
         pack_rows,
         bev_maps,
+    )
+    summary["source_rows_with_existing_images"] = len(image_available_rows)
+    summary["categories_with_existing_images"] = dict(
+        Counter(text(row.get("category")) for row in image_available_rows).most_common()
     )
     write_manifest(args.output_dir / "fixed_camera_visual_qa_manifest.csv", pack_rows)
     write_markdown(
