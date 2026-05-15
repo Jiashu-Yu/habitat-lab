@@ -133,6 +133,15 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--exclude-scene-ids",
+        nargs="*",
+        default=[],
+        help=(
+            "Optional scene_id denylist for known-bad scenes. Accepts "
+            "space-separated values and comma-separated tokens."
+        ),
+    )
+    parser.add_argument(
         "--instance-indices",
         nargs="*",
         default=[],
@@ -833,6 +842,7 @@ def collect_target_objects(
     max_scenes: int,
     max_objects_per_category: int,
     scene_ids: Optional[Sequence[str]] = None,
+    exclude_scene_ids: Optional[Sequence[str]] = None,
     instance_indices: Optional[Sequence[int]] = None,
     exclude_region_labels: Optional[Sequence[str]] = None,
 ) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
@@ -848,6 +858,7 @@ def collect_target_objects(
 
     category_set = set(categories)
     scene_id_filter = set(scene_ids or [])
+    excluded_scene_id_filter = set(exclude_scene_ids or [])
     instance_index_filter = set(instance_indices or [])
     excluded_regions = set(exclude_region_labels or [])
     unlimited_scenes = max_scenes <= 0
@@ -855,6 +866,8 @@ def collect_target_objects(
 
     for scene_path in scene_paths:
         scene_id = scene_id_from_path(scene_path)
+        if scene_id in excluded_scene_id_filter:
+            continue
         if scene_id_filter and scene_id not in scene_id_filter:
             continue
         if not unlimited_scenes and scenes_with_targets >= max_scenes:
@@ -976,6 +989,7 @@ def collect_target_objects(
         "skipped_by_region_label": dict(skipped_by_region_label),
         "metadata_entries": len(object_metadata),
         "scene_id_filter": sorted(scene_id_filter),
+        "excluded_scene_ids": sorted(excluded_scene_id_filter),
         "instance_index_filter": sorted(instance_index_filter),
     }
     return selected_objects, summary
@@ -2675,9 +2689,11 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
     categories = parse_categories(args.categories)
     args.categories = categories
     scene_ids = parse_string_list(args.scene_ids)
+    exclude_scene_ids = parse_string_list(args.exclude_scene_ids)
     instance_indices = parse_int_list(args.instance_indices)
     exclude_region_labels = parse_categories(args.exclude_region_labels)
     args.scene_ids = scene_ids
+    args.exclude_scene_ids = exclude_scene_ids
     args.instance_indices = instance_indices
     args.exclude_region_labels = exclude_region_labels
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -2692,6 +2708,7 @@ def run(args: argparse.Namespace) -> Dict[str, Any]:
         max_scenes=args.max_scenes,
         max_objects_per_category=args.max_objects_per_category,
         scene_ids=scene_ids,
+        exclude_scene_ids=exclude_scene_ids,
         instance_indices=instance_indices,
         exclude_region_labels=exclude_region_labels,
     )
