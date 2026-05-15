@@ -33,6 +33,8 @@ BEV_REJECT_REASON_ORDER = [
     "too_small",
     "few_pixels",
     "distance",
+    "small_island",
+    "inside_bbox",
     "mask_large",
     "tiny_mask",
     "invalid",
@@ -43,6 +45,8 @@ BEV_REJECT_REASON_STYLES = {
     "too_small": ("reject: visual too small", (210, 72, 38)),
     "few_pixels": ("reject: few pixels", (219, 139, 45)),
     "distance": ("reject: distance", (120, 86, 190)),
+    "small_island": ("reject: small nav island", (35, 115, 165)),
+    "inside_bbox": ("reject: inside target bbox", (195, 48, 95)),
     "mask_large": ("reject: full/large mask", (38, 145, 180)),
     "tiny_mask": ("reject: tiny mask", (198, 66, 135)),
     "invalid": ("reject: invalid snap/error", (145, 98, 45)),
@@ -509,6 +513,10 @@ def bev_reason_bucket(row: Dict[str, Any]) -> Tuple[str, str, Tuple[int, int, in
         )
     ):
         bucket = "distance"
+    elif "navigable_island_radius<" in reason_text:
+        bucket = "small_island"
+    elif "snapped_inside_target_bbox_xz" in reason_text:
+        bucket = "inside_bbox"
     elif "image_fraction<" in reason_text or "bbox_fraction<" in reason_text:
         bucket = "too_small"
     elif "visible_pixels<" in reason_text:
