@@ -460,6 +460,18 @@ def flatten_candidate(
         or [],
         "semantic_mapping_status": candidate.get("semantic_mapping_status"),
         "rigid_object_handle": candidate.get("rigid_object_handle"),
+        "navigable_island_radius": candidate.get("navigable_island_radius"),
+        "navigable_island_id": candidate.get("navigable_island_id"),
+        "navigable_island_error": candidate.get("navigable_island_error"),
+        "min_navigable_island_radius": candidate.get(
+            "min_navigable_island_radius"
+        ),
+        "snapped_inside_target_bbox_xz": candidate.get(
+            "snapped_inside_target_bbox_xz"
+        ),
+        "reject_inside_target_bbox_xz": candidate.get(
+            "reject_inside_target_bbox_xz"
+        ),
         "agent_state": candidate.get("agent_state"),
         "navigable_position": candidate.get("navigable_position"),
         "debug_review_images": debug_paths(candidate, "_review.png"),
@@ -502,6 +514,18 @@ def prototype_viewpoint(row: Dict[str, Any]) -> Dict[str, Any]:
             "selection_status": row.get("selection_status"),
             "selection_reasons": row.get("selection_reasons"),
             "rigid_object_handle": row.get("rigid_object_handle"),
+            "navigable_island_radius": row.get("navigable_island_radius"),
+            "navigable_island_id": row.get("navigable_island_id"),
+            "navigable_island_error": row.get("navigable_island_error"),
+            "min_navigable_island_radius": row.get(
+                "min_navigable_island_radius"
+            ),
+            "snapped_inside_target_bbox_xz": row.get(
+                "snapped_inside_target_bbox_xz"
+            ),
+            "reject_inside_target_bbox_xz": row.get(
+                "reject_inside_target_bbox_xz"
+            ),
             "category_source": row.get("category_source"),
             "canonical_category": row.get("canonical_category"),
             "canonical_category_source": row.get("canonical_category_source"),
@@ -702,6 +726,12 @@ def write_candidate_csv(path: Path, rows: List[Dict[str, Any]]) -> None:
         "distance_to_bbox",
         "planar_distance_to_object_xz",
         "planar_distance_to_bbox_xz",
+        "navigable_island_radius",
+        "navigable_island_id",
+        "navigable_island_error",
+        "min_navigable_island_radius",
+        "snapped_inside_target_bbox_xz",
+        "reject_inside_target_bbox_xz",
         "sentinel_bbox_area_fraction",
         "sentinel_mask_quality_flags",
         "category_aliases",

@@ -60,6 +60,7 @@ def object_uid_from_candidate(row: Dict[str, Any]) -> str:
 def recompute_summary(
     object_records_by_uid: Dict[str, Dict[str, Any]],
     candidate_rows_by_uid: Dict[str, List[Dict[str, Any]]],
+    prototype_records_by_uid: Dict[str, Dict[str, Any]],
     sources: List[str],
 ) -> Dict[str, Any]:
     candidate_status_counts: Counter[str] = Counter()
@@ -107,6 +108,104 @@ def recompute_summary(
                 int(r.get("instance_index") or -1),
             ),
         ),
+        "prototype_viewpoints_by_object": {
+            uid: prototype_records_by_uid[uid]
+            for uid in sorted(prototype_records_by_uid)
+            if uid in object_records_by_uid
+        },
+    }
+
+
+def prototype_viewpoint_from_candidate(row: Dict[str, Any]) -> Dict[str, Any]:
+    agent_state = row.get("agent_state") or {}
+    return {
+        "agent_state": {
+            "position": agent_state.get("position") or row.get("navigable_position"),
+            "rotation": agent_state.get("rotation"),
+        },
+        "iou": None,
+        "metadata": {
+            "source": "hssd_fixed_camera_viewpoint_prototype",
+            "category": row.get("category"),
+            "scene_id": row.get("scene_id"),
+            "instance_index": row.get("instance_index"),
+            "candidate_index": row.get("candidate_index"),
+            "visible_pixels": row.get("visible_pixels"),
+            "image_fraction": row.get("image_fraction"),
+            "vis_ratio": row.get("vis_ratio"),
+            "bbox_frac": row.get("bbox_frac"),
+            "threshold_profile": row.get("threshold_profile"),
+            "threshold_label": row.get("threshold_label"),
+            "candidate_min_image_fraction": row.get("candidate_min_image_fraction"),
+            "candidate_min_bbox_fraction": row.get("candidate_min_bbox_fraction"),
+            "selection_distance": row.get("selection_distance"),
+            "selection_distance_source": row.get("selection_distance_source"),
+            "distance_to_object": row.get("distance_to_object"),
+            "distance_to_bbox": row.get("distance_to_bbox"),
+            "selection_status": row.get("selection_status"),
+            "selection_reasons": row.get("selection_reasons"),
+            "rigid_object_handle": row.get("rigid_object_handle"),
+            "navigable_island_radius": row.get("navigable_island_radius"),
+            "navigable_island_id": row.get("navigable_island_id"),
+            "navigable_island_error": row.get("navigable_island_error"),
+            "min_navigable_island_radius": row.get(
+                "min_navigable_island_radius"
+            ),
+            "snapped_inside_target_bbox_xz": row.get(
+                "snapped_inside_target_bbox_xz"
+            ),
+            "reject_inside_target_bbox_xz": row.get(
+                "reject_inside_target_bbox_xz"
+            ),
+            "category_source": row.get("category_source"),
+            "canonical_category": row.get("canonical_category"),
+            "canonical_category_source": row.get("canonical_category_source"),
+            "condensed_category": row.get("condensed_category"),
+            "primary_semantic_category": row.get("primary_semantic_category"),
+            "main_category": row.get("main_category"),
+            "clean_category": row.get("clean_category"),
+            "super_category": row.get("super_category"),
+            "region_label": row.get("region_label"),
+            "region_name": row.get("region_name"),
+            "translation": row.get("translation"),
+            "object_center_static_approx": row.get("object_center_static_approx"),
+            "object_bbox_static_approx": row.get("object_bbox_static_approx"),
+            "object_name": row.get("object_name"),
+            "objects_json_name": row.get("objects_json_name"),
+            "wnsynsetkey": row.get("wnsynsetkey"),
+            "main_wnsynsetkey": row.get("main_wnsynsetkey"),
+            "has_multiple_objects": row.get("has_multiple_objects"),
+            "is_articulatable": row.get("is_articulatable"),
+        },
+    }
+
+
+def object_metadata_from_record(record: Dict[str, Any]) -> Dict[str, Any]:
+    excluded = {
+        "status",
+        "accepted_count",
+        "review_count",
+        "rejected_count",
+        "candidate_count",
+        "accepted_viewpoints",
+        "review_viewpoints",
+    }
+    return {key: value for key, value in record.items() if key not in excluded}
+
+
+def reconstruct_prototype_record(
+    record: Dict[str, Any],
+    rows: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    accepted_rows = [
+        row for row in rows if row.get("selection_status") == "accepted"
+    ]
+    return {
+        "object": object_metadata_from_record(record),
+        "object_status": record.get("status"),
+        "view_points": [
+            prototype_viewpoint_from_candidate(row) for row in accepted_rows
+        ],
     }
 
 
@@ -265,17 +364,20 @@ def main() -> None:
     args = parse_args()
     object_records_by_uid: Dict[str, Dict[str, Any]] = {}
     candidate_rows_by_uid: Dict[str, List[Dict[str, Any]]] = {}
+    prototype_records_by_uid: Dict[str, Dict[str, Any]] = {}
     sources: List[str] = []
 
     for path in args.selection_jsons:
         data = load_json(path)
         sources.append(str(path))
         summary = data.get("summary") or {}
+        prototypes = summary.get("prototype_viewpoints_by_object") or {}
         for record in summary.get("object_records") or []:
             uid = object_uid_from_record(record)
             if not uid:
                 continue
             object_records_by_uid[uid] = record
+            prototype_records_by_uid.pop(uid, None)
         grouped_rows: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
         for row in data.get("candidate_rows") or []:
             uid = object_uid_from_candidate(row)
@@ -283,8 +385,25 @@ def main() -> None:
                 grouped_rows[uid].append(row)
         for uid, rows in grouped_rows.items():
             candidate_rows_by_uid[uid] = rows
+        for uid, prototype_record in prototypes.items():
+            uid = str(uid)
+            if uid in object_records_by_uid:
+                prototype_records_by_uid[uid] = prototype_record
 
-    summary = recompute_summary(object_records_by_uid, candidate_rows_by_uid, sources)
+    for uid, record in object_records_by_uid.items():
+        if uid in prototype_records_by_uid:
+            continue
+        prototype_records_by_uid[uid] = reconstruct_prototype_record(
+            record,
+            candidate_rows_by_uid.get(uid, []),
+        )
+
+    summary = recompute_summary(
+        object_records_by_uid,
+        candidate_rows_by_uid,
+        prototype_records_by_uid,
+        sources,
+    )
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     json_path = args.output_dir / "fixed_camera_viewpoint_merged_selection.json"

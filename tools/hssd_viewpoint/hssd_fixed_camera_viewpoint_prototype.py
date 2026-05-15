@@ -215,6 +215,26 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--min-navigable-island-radius",
+        type=float,
+        default=1.5,
+        help=(
+            "Reject snapped candidate viewpoints on tiny navmesh islands, "
+            "such as object tops or bed surfaces. This follows Habitat's "
+            "PointNav/ObjectNav episode-generation convention. Use 0 to disable."
+        ),
+    )
+    parser.add_argument(
+        "--allow-inside-target-bbox-xz",
+        action="store_true",
+        help=(
+            "Allow snapped candidate viewpoints whose XZ position lies inside "
+            "the target object's static bbox footprint. By default these are "
+            "rejected because they usually indicate object-top/small-island "
+            "navmesh artifacts or invalid robot placements."
+        ),
+    )
+    parser.add_argument(
         "--max-debug-images",
         type=int,
         default=100,
@@ -608,6 +628,42 @@ def point_to_bbox_distance(
         elif val > hi:
             squared += (val - hi) ** 2
     return math.sqrt(squared)
+
+
+def point_inside_bbox_xz(
+    point: Optional[Sequence[float]],
+    bbox: Optional[Dict[str, Sequence[float]]],
+    eps: float = 1e-4,
+) -> Optional[bool]:
+    if point is None or bbox is None:
+        return None
+    if len(point) < 3:
+        return None
+    yaw = bbox.get("yaw_rad")
+    sizes = bbox.get("sizes")
+    center = bbox.get("center")
+    if yaw is not None and sizes is not None and center is not None:
+        ctr = [float(center[i]) for i in range(3)]
+        half_x = abs(float(sizes[0])) * 0.5
+        half_z = abs(float(sizes[2])) * 0.5
+        cos_yaw = math.cos(float(yaw))
+        sin_yaw = math.sin(float(yaw))
+        dx = float(point[0]) - ctr[0]
+        dz = float(point[2]) - ctr[2]
+        local_x = cos_yaw * dx - sin_yaw * dz
+        local_z = sin_yaw * dx + cos_yaw * dz
+        return abs(local_x) < max(half_x - eps, 0.0) and abs(local_z) < max(
+            half_z - eps, 0.0
+        )
+
+    bmin = bbox.get("min")
+    bmax = bbox.get("max")
+    if bmin is None or bmax is None or len(bmin) < 3 or len(bmax) < 3:
+        return None
+    return (
+        float(bmin[0]) + eps < float(point[0]) < float(bmax[0]) - eps
+        and float(bmin[2]) + eps < float(point[2]) < float(bmax[2]) - eps
+    )
 
 
 def local_xz_rect_distance(x: float, z: float, half_x: float, half_z: float) -> float:
@@ -1360,6 +1416,44 @@ def snap_navigable(pathfinder: Any, requested: List[float]) -> Tuple[Optional[An
     except Exception as exc:  # noqa: BLE001
         return None, "is_navigable_failed:" + repr(exc)
     return snapped, "snapped_navigable"
+
+
+def navigable_island_diagnostics(pathfinder: Any, point: Any) -> Dict[str, Any]:
+    diag: Dict[str, Any] = {
+        "navigable_island_radius": None,
+        "navigable_island_id": None,
+        "navigable_island_error": None,
+    }
+    try:
+        radius = float(pathfinder.island_radius(point))
+        if math.isfinite(radius):
+            diag["navigable_island_radius"] = radius
+        else:
+            diag["navigable_island_error"] = "island_radius_nonfinite"
+    except Exception as exc:  # noqa: BLE001
+        diag["navigable_island_error"] = "island_radius_failed:" + repr(exc)
+
+    if hasattr(pathfinder, "get_island"):
+        try:
+            island_id = int(pathfinder.get_island(point))
+            diag["navigable_island_id"] = island_id
+        except Exception as exc:  # noqa: BLE001
+            if diag["navigable_island_error"]:
+                diag["navigable_island_error"] += "; "
+            else:
+                diag["navigable_island_error"] = ""
+            diag["navigable_island_error"] += "get_island_failed:" + repr(exc)
+    return diag
+
+
+def is_tiny_navigable_island(
+    island_diag: Dict[str, Any],
+    min_island_radius: float,
+) -> bool:
+    if min_island_radius <= 0:
+        return False
+    radius = island_diag.get("navigable_island_radius")
+    return radius is not None and float(radius) < min_island_radius
 
 
 def quaternion_wxyz(q: Any) -> Optional[List[float]]:
@@ -2171,6 +2265,61 @@ def process_object_true(
                     candidate_results.append(result)
                     continue
 
+                snapped_list = snapped.tolist()
+                planar_distance_to_bbox = point_to_bbox_distance(
+                    snapped_list, target_bbox, axes=(0, 2)
+                )
+                snapped_inside_target_bbox_xz = point_inside_bbox_xz(
+                    snapped_list, target_bbox
+                )
+                result.update(
+                    {
+                        "navigable_position": snapped_list,
+                        "distance_to_bbox": (
+                            float(planar_distance_to_bbox)
+                            if planar_distance_to_bbox is not None
+                            else None
+                        ),
+                        "planar_distance_to_bbox_xz": (
+                            float(planar_distance_to_bbox)
+                            if planar_distance_to_bbox is not None
+                            else None
+                        ),
+                        "snapped_inside_target_bbox_xz": (
+                            bool(snapped_inside_target_bbox_xz)
+                            if snapped_inside_target_bbox_xz is not None
+                            else None
+                        ),
+                        "reject_inside_target_bbox_xz": (
+                            not args.allow_inside_target_bbox_xz
+                        ),
+                    }
+                )
+                island_diag = navigable_island_diagnostics(sim.pathfinder, snapped)
+                result.update(island_diag)
+                result["min_navigable_island_radius"] = (
+                    args.min_navigable_island_radius
+                )
+                early_rejection_reasons: List[str] = []
+                if is_tiny_navigable_island(
+                    island_diag,
+                    args.min_navigable_island_radius,
+                ):
+                    early_rejection_reasons.append(
+                        "navigable_island_radius"
+                        f"<{args.min_navigable_island_radius}"
+                    )
+                if (
+                    snapped_inside_target_bbox_xz
+                    and not args.allow_inside_target_bbox_xz
+                ):
+                    early_rejection_reasons.append("snapped_inside_target_bbox_xz")
+                if early_rejection_reasons:
+                    result["rejected"] = True
+                    result["rejection_reason"] = ";".join(early_rejection_reasons)
+                    candidate_results.append(result)
+                    continue
+
                 rotation_result = yaw_to_face_target(
                     snapped, np.array(target_center, dtype=np.float32)
                 )
@@ -2191,13 +2340,13 @@ def process_object_true(
                 semantic_obs = observations.get("semantic")
                 semantic_obs_diag = semantic_observation_diagnostics(semantic_obs)
 
-                distance = euclidean(snapped.tolist(), target_center)
-                planar_dist = planar_distance_xz(snapped.tolist(), target_center)
+                distance = euclidean(snapped_list, target_center)
+                planar_dist = planar_distance_xz(snapped_list, target_center)
                 distance_to_bbox = point_to_bbox_distance(
-                    snapped.tolist(), target_bbox, axes=(0, 1, 2)
+                    snapped_list, target_bbox, axes=(0, 1, 2)
                 )
                 planar_distance_to_bbox = point_to_bbox_distance(
-                    snapped.tolist(), target_bbox, axes=(0, 2)
+                    snapped_list, target_bbox, axes=(0, 2)
                 )
 
                 if semantic_obs is not None and semantic_ids:
@@ -2259,9 +2408,29 @@ def process_object_true(
 
                 result.update(
                     {
-                        "navigable_position": snapped.tolist(),
+                        "navigable_position": snapped_list,
+                        "navigable_island_radius": island_diag.get(
+                            "navigable_island_radius"
+                        ),
+                        "navigable_island_id": island_diag.get(
+                            "navigable_island_id"
+                        ),
+                        "navigable_island_error": island_diag.get(
+                            "navigable_island_error"
+                        ),
+                        "min_navigable_island_radius": (
+                            args.min_navigable_island_radius
+                        ),
+                        "snapped_inside_target_bbox_xz": (
+                            bool(snapped_inside_target_bbox_xz)
+                            if snapped_inside_target_bbox_xz is not None
+                            else None
+                        ),
+                        "reject_inside_target_bbox_xz": (
+                            not args.allow_inside_target_bbox_xz
+                        ),
                         "agent_state": {
-                            "position": snapped.tolist(),
+                            "position": snapped_list,
                             "rotation": quat_to_coeffs(rotation).tolist(),
                         },
                         "distance_to_object": float(distance),
@@ -2391,6 +2560,13 @@ def process_object_true(
                                 if planar_distance_to_bbox is not None
                                 else ""
                             ),
+                            "navigable_island_radius": (
+                                f"{float(island_diag['navigable_island_radius']):.3f}"
+                                if island_diag.get("navigable_island_radius")
+                                is not None
+                                else ""
+                            ),
+                            "inside_target_bbox_xz": snapped_inside_target_bbox_xz,
                             "sentinel_bbox": result.get("sentinel_bbox"),
                             "quality_flags": sentinel_quality_flags,
                         }
@@ -2448,6 +2624,8 @@ def fixed_camera_summary(args: argparse.Namespace) -> Dict[str, Any]:
         "uses_look_up_down_or_tilt_sweep": False,
         "agent_height": args.agent_height,
         "agent_radius": args.agent_radius,
+        "min_navigable_island_radius": args.min_navigable_island_radius,
+        "reject_inside_target_bbox_xz": not args.allow_inside_target_bbox_xz,
     }
 
 
