@@ -2,6 +2,14 @@
 
 This directory contains prototype and future production tools for HSSD ObjectNav viewpoint generation and quality audits.
 
+For the full research logic and end-to-end pipeline from HSSD metadata to
+fixed-camera viewpoints, ObjectNav split export, MP4/Parquet rendering, and
+review packs, see:
+
+```text
+docs/audits/hssd_fixed_camera_objectnav_end_to_end_handoff.md
+```
+
 Current tool:
 
 - `hssd_fixed_camera_viewpoint_prototype.py`: prototype fixed-camera viewpoint visibility audit/generator.

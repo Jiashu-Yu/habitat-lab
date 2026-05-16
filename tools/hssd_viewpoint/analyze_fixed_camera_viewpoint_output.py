@@ -20,6 +20,25 @@ DEFAULT_INPUT = Path(
     "hssd_fixed_camera_viewpoint_prototype.json"
 )
 DEFAULT_OUTPUT_DIR = Path("outputs/hssd_fixed_camera_viewpoint_analysis")
+VISIBLE_PIXEL_KEYS = (
+    "visible_pixels",
+    "visible_pixel_count",
+    "sentinel_visible_pixels",
+    "target_visible_pixels",
+)
+VIS_RATIO_KEYS = (
+    "vis_ratio",
+    "visibility_ratio",
+    "image_fraction",
+    "sentinel_image_fraction",
+    "target_image_fraction",
+)
+BBOX_FRAC_KEYS = (
+    "bbox_frac",
+    "bbox_fraction",
+    "sentinel_bbox_area_fraction",
+    "target_bbox_area_fraction",
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -54,6 +73,23 @@ def parse_args() -> argparse.Namespace:
 def load_json(path: Path) -> Dict[str, Any]:
     with path.open("r", encoding="utf-8") as f:
         return json.load(f)
+
+
+def first_present(data: Dict[str, Any], keys: Tuple[str, ...], default: Any = None) -> Any:
+    for key in keys:
+        value = data.get(key)
+        if value is not None:
+            return value
+    return default
+
+
+def to_int(value: Any, default: int = 0) -> int:
+    try:
+        if value is None:
+            return default
+        return int(value)
+    except (TypeError, ValueError):
+        return default
 
 
 def iter_object_candidate_rows(data: Dict[str, Any]) -> Iterable[Dict[str, Any]]:
@@ -91,13 +127,10 @@ def flatten_row(
         p for p in debug_images if "_review" in str(p) or str(p).endswith("review.png")
     ]
     flags = [str(f) for f in (candidate.get("sentinel_mask_quality_flags") or [])]
-    visible_pixels = int(
-        candidate.get("visible_pixels", candidate.get("visible_pixel_count", 0)) or 0
-    )
+    visible_pixels = to_int(first_present(candidate, VISIBLE_PIXEL_KEYS, 0))
     heuristic_visible_pixels = int(candidate.get("heuristic_visible_pixels") or 0)
-    image_fraction = candidate.get("image_fraction")
-    if image_fraction is None:
-        image_fraction = candidate.get("sentinel_image_fraction")
+    image_fraction = first_present(candidate, VIS_RATIO_KEYS)
+    bbox_fraction = first_present(candidate, BBOX_FRAC_KEYS)
     return {
         "category": obj.get("category"),
         "scene_id": str(obj.get("scene_id")),
@@ -107,10 +140,12 @@ def flatten_row(
         "candidate_index": candidate.get("candidate_index"),
         "visible_pixels": visible_pixels,
         "image_fraction": image_fraction,
+        "vis_ratio": image_fraction,
         "sentinel_semantic_id": candidate.get("sentinel_semantic_id"),
         "sentinel_status": candidate.get("sentinel_status"),
         "sentinel_bbox": candidate.get("sentinel_bbox"),
-        "sentinel_bbox_area_fraction": candidate.get("sentinel_bbox_area_fraction"),
+        "sentinel_bbox_area_fraction": bbox_fraction,
+        "bbox_frac": bbox_fraction,
         "sentinel_mask_quality_flags": flags,
         "heuristic_visible_pixels": heuristic_visible_pixels,
         "heuristic_best_semantic_id": candidate.get("heuristic_best_semantic_id"),
@@ -193,7 +228,9 @@ def write_csv(path: Path, rows: List[Dict[str, Any]]) -> None:
         "candidate_index",
         "visible_pixels",
         "image_fraction",
+        "vis_ratio",
         "sentinel_bbox_area_fraction",
+        "bbox_frac",
         "sentinel_mask_quality_flags",
         "heuristic_visible_pixels",
         "heuristic_best_semantic_id",
