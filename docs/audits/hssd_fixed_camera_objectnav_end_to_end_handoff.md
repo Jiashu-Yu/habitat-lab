@@ -2,6 +2,13 @@
 
 Date: 2026-05-16
 
+For a complete fresh-server/HPC runbook that connects this viewpoint pipeline
+to `MP4 + Parquet` rendering, see the companion rendering repository:
+
+```text
+ObjectNavigationRendering/README_FIXED_CAMERA_HSSD.md
+```
+
 This document explains the full workflow behind the HSSD fixed-camera ObjectNav
 viewpoint generator and how it connects to downstream `MP4 + Parquet` training
 data generation in `ObjectNavigationRendering`.
@@ -371,4 +378,3 @@ Do not commit:
 6. Render full v1 MP4/Parquet data on HPC.
 7. Decide whether `visibility_verified` is a hard training filter or report
    metric.
-
