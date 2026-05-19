@@ -2,6 +2,51 @@
 
 Date: 2026-05-16
 
+Latest update, 2026-05-18: Jing's `hssd-viewpoint-yawfix` reference branch
+was fetched from `jingz6676/ObjectNavigationRendering` and the Stage 1-3
+viewpoint files were synced into this repo. The key change is the yaw fix
+`atan2(-view_dir.x, -view_dir.z)`, plus V3-style selection gates and richer
+Stage 3 QA rendering. See `docs/FIXED_CAMERA_PIPELINE_SUMMARY.md` for Jing's
+iteration log and final recommended config.
+
+Planning update, 2026-05-19: the next design pass should focus on category
+source and threshold simplification. Category grounding should use official
+`hssd-hab/metadata/hssd_obj_semantics_condensed.csv` columns 3 and 4:
+`condensed_category` as the default canonical grouping label, and
+`primary_semantic_category` as the fine-grained corrected label. Keep both, and
+introduce/verify an explicit `task_category` mapping before training export.
+Threshold experiments should compare per-category, unified, and tiny-vs-regular
+profiles. Tilt remains out of scope unless the real robot can tilt. If the
+rendered data moves to `256x256`, scale absolute pixel gates or prefer
+fraction-based gates.
+
+Latest code update, 2026-05-19: Jing pushed WIP rendering branch
+`refactor/repo-cleanup-and-dual-tier` at commit `04e3f85`. It restructures the
+rendering repo into `viewpoints/`, `episodes/`, `render/`, `postprocess/`,
+`lib/`, and `ops/`, adds `viewpoints/_object_label_schema.py`, and introduces a
+dual-tier label resolver:
+
+- `navobj6_*`: strict HSSD ObjectNav-6 label using v0.2.5 white-list,
+  WordNet synset mapping, and limited condensed+room fallback.
+- `open_vocab`: always-populated language metadata from wnsynset, WordNet,
+  FloorPlanner tags, and raw object names.
+
+This supersedes treating `condensed_category` alone as the final task label.
+The branch is not finished yet; in commit `04e3f85`, the wrapper's Stage 4
+command still appears to use stale flags relative to the current parser.
+
+For the research logic and train/eval data contract, see:
+
+```text
+docs/audits/hssd_fixed_camera_research_logic_data_spec_memo.md
+```
+
+For the Maxwell server migration plan, see:
+
+```text
+docs/audits/hssd_maxwell_migration_runbook.md
+```
+
 For a complete fresh-server/HPC runbook that connects this viewpoint pipeline
 to `MP4 + Parquet` rendering, see the companion rendering repository:
 
@@ -109,6 +154,31 @@ The prototype:
 9. computes sentinel target metrics;
 10. writes debug images and scene checkpoints.
 
+Small yawfix sanity run before scaling:
+
+```bash
+RUN=local_yawfix_sanity_scenes_102344022_102344328
+
+python tools/hssd_viewpoint/hssd_fixed_camera_viewpoint_prototype.py \
+  --scene-root ../habitat-lab/data/scene_datasets/hssd-hab \
+  --inventory-json docs/audits/hssd_category_expansion_inventory.json \
+  --output-dir outputs/$RUN \
+  --categories plant potted_plant tv chair toilet bed \
+  --scene-ids 102344022 102344328 \
+  --max-scenes 0 \
+  --max-objects-per-category 3 \
+  --samples-per-object 32 \
+  --candidate-radii 0.25 0.5 0.75 0.9 \
+  --seed 13 \
+  --gpu-device-id 0 \
+  --debug-images \
+  --max-debug-images 800
+```
+
+Review goal: off-axis targets should no longer be left/right mirrored, plants
+should be less likely to sit on the frame edge, and the Stage 3 BEV forward cone
+should agree with the rendered target direction.
+
 Fixed-camera setting:
 
 ```text
@@ -119,6 +189,10 @@ camera_height=0.88
 camera_pitch_deg=0
 no tilt / no look-up / no look-down
 ```
+
+Yaw is computed after navmesh snap. Post-yawfix code directly constructs a
+yaw-only quaternion with `atan2(-view_dir.x, -view_dir.z)`; this avoids the
+left/right mirror failure that pushed off-axis objects toward the frame edge.
 
 Important candidate metrics:
 
@@ -135,35 +209,51 @@ Important candidate metrics:
 ## Stage 2: Select Valid Viewpoints
 
 ```bash
-SEL=${RUN}_selection_qtight
+SEL=${RUN}_selection_final
 
 python tools/hssd_viewpoint/select_fixed_camera_viewpoints.py \
   --input-json outputs/$RUN/hssd_fixed_camera_viewpoint_prototype.json \
   --output-dir outputs/$SEL \
+  --bbox-metric max_axis \
+  --connector and \
   --threshold-profile low_small \
+  --low-small-categories toilet vase potted_plant \
   --min-visible-pixels 300 \
   --min-image-fraction 0.10 \
-  --min-bbox-fraction 0.15 \
+  --min-bbox-fraction 0.10 \
   --low-small-min-image-fraction 0.03 \
   --low-small-min-bbox-fraction 0.06 \
   --vase-min-image-fraction 0.02 \
   --vase-min-bbox-fraction 0.04 \
-  --max-distance 0.90 \
-  --max-accepted-image-fraction 0.98 \
-  --min-viewpoints-per-object 3 \
-  --review-flags
+  --bbox-per-cat bed=0.10 couch=0.10 chair=0.05 tv=0.05 potted_plant=0.02 toilet=0.02 \
+  --vis-per-cat bed=0.10 couch=0.10 chair=0.025 tv=0.025 potted_plant=0.005 toilet=0.01 \
+  --min-fill-ratio 0.40 \
+  --min-axis 0.10 \
+  --max-min-axis-per-cat bed=0.92 \
+  --max-distance 0.89 \
+  --max-accepted-image-fraction 1.0 \
+  --max-accepted-image-fraction-per-cat bed=0.56 \
+  --reject-flags full_frame_sentinel_mask tiny_sentinel_mask \
+  --min-viewpoints-per-object 1 \
+  --top-k 8
 ```
 
-Current policy:
+Recommended post-yawfix train-quality policy:
 
-- Global visual gate: `image_fraction >= 0.10 OR bbox_frac >= 0.15`.
-- Low/small categories use lower visual thresholds, especially `toilet`.
-- `vase` gets a separate low/small threshold because raw target fraction can be
-  low while the object remains visually recognizable.
-- Distance is based on `distance_to_bbox` first, because object-center distance
-  can be misleading for large objects.
-- Hard rejections include full-frame/near-full-frame masks, tiny masks, tiny
-  navmesh islands, inside-bbox snapped points, and excessive bbox distance.
+- Visual gate is `AND`, not legacy `OR`: both visibility and bbox size must pass.
+- Bbox metric is `max_axis`, which is better for elongated objects and the V3
+  reshard convention.
+- Per-category visibility/bbox thresholds keep chairs, TVs, plants, and toilets
+  from being over-pruned while keeping large objects strict.
+- `min_fill_ratio` and `min_axis` reject edge slivers and sparse masks.
+- Bed gets extra close-up handling through `max_min_axis` and
+  `max_accepted_image_fraction_per_cat`, because some bed bboxes include nearby
+  structure or collapse into wall-panel views.
+- Distance is still based on `distance_to_bbox` first. Stage 2 can synthesize
+  `distance_to_bbox_estimated` from per-category half-diagonal medians when old
+  Stage 1 metadata lacks bbox sizes.
+- The old `selection_qtight` command is now a legacy comparison baseline, not
+  the preferred train-data config.
 
 This policy is quality-first. If a particular instance is visually poor or
 taxonomically ambiguous, v1 should drop it instead of relaxing thresholds for
@@ -178,6 +268,24 @@ python tools/hssd_viewpoint/build_fixed_camera_visual_qa_pack.py \
   --selection-json outputs/$SEL/fixed_camera_viewpoint_selection.json \
   --path-root . \
   --output-dir $QA \
+  --max-per-category-status 80 \
+  --max-per-failing-object 20 \
+  --max-total-images 1200
+```
+
+When Stage 1 debug images are capped, Stage 3 can now self-render missing review
+PNGs:
+
+```bash
+python tools/hssd_viewpoint/build_fixed_camera_visual_qa_pack.py \
+  --selection-json outputs/$SEL/fixed_camera_viewpoint_selection.json \
+  --path-root . \
+  --output-dir $QA \
+  --prototype-json outputs/$RUN/hssd_fixed_camera_viewpoint_prototype.json \
+  --scene-root ../habitat-lab/data/scene_datasets/hssd-hab \
+  --scene-dataset-config ../habitat-lab/data/scene_datasets/hssd-hab/hssd-hab.scene_dataset_config.json \
+  --render-missing \
+  --render-gpu 0 \
   --max-per-category-status 80 \
   --max-per-failing-object 20 \
   --max-total-images 1200
@@ -241,7 +349,7 @@ Mini export:
 cd ~/autodl-tmp/workspace/hssd/ObjectNavigationRendering_fixedcam
 
 DATA=~/autodl-tmp/workspace/hssd/habitat-lab/data
-SEL=~/autodl-tmp/workspace/hssd/habitat-lab-viewpoint/outputs/server_render_v1_island_bbox_cap100_s160_dist090_bbox015_skipbad_v2_selection_qtight/fixed_camera_viewpoint_selection.json
+SEL=~/autodl-tmp/workspace/hssd/habitat-lab-viewpoint/outputs/server_render_v1_island_bbox_cap100_s160_dist090_bbox015_skipbad_v2_selection_final/fixed_camera_viewpoint_selection.json
 SPLIT=hssd_fixedcam_v1_mini_nearestvp
 
 python export_fixed_camera_selection_to_hssd_episodes.py \
@@ -370,11 +478,18 @@ Do not commit:
 
 ## Next Steps
 
-1. Jing tunes rendering parameters.
-2. Rerun or reuse the v1 fixed-camera selection.
-3. Run a medium-scale split/export/render probe.
-4. Inspect category-balanced MP4 review pack.
-5. Generate scene-level train/val prototype splits.
-6. Render full v1 MP4/Parquet data on HPC.
-7. Decide whether `visibility_verified` is a hard training filter or report
-   metric.
+1. Pull Jing's next push and inspect threshold, image-size, category, and docs
+   changes before changing local logic.
+2. Verify category handling from `hssd_obj_semantics_condensed.csv`: preserve
+   raw `condensed_category` and `primary_semantic_category`, then define
+   `task_category` for train/eval vocabulary.
+3. Compare three train threshold candidates: current per-category yawfix profile,
+   a unified profile, and a tiny-vs-regular two-profile setup.
+4. Keep tilt disabled unless the real robot supports tilt.
+5. Decide whether Stage 1/QA/rendering should all move to `256x256`; if yes,
+   scale `min_visible_pixels` and parameterize Stage 3 `--render-missing`.
+6. Run a small server-side yawfix/category/resolution sanity batch before any
+   full rerun.
+7. Export a small split and render MP4/Parquet probes before scaling.
+8. Decide final train filters for low visibility, bbox contamination, bed
+   close-ups, and `visibility_verified` before the full HPC render.

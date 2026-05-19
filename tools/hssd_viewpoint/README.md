@@ -8,6 +8,7 @@ review packs, see:
 
 ```text
 docs/audits/hssd_fixed_camera_objectnav_end_to_end_handoff.md
+docs/FIXED_CAMERA_PIPELINE_SUMMARY.md
 ```
 
 Current tool:
@@ -47,10 +48,33 @@ Use `select_fixed_camera_viewpoints.py` after manual review has established qual
 python tools/hssd_viewpoint/select_fixed_camera_viewpoints.py \
   --input-json outputs/hssd_fixed_camera_viewpoint_prototype/hssd_fixed_camera_viewpoint_prototype.json \
   --output-dir outputs/hssd_fixed_camera_viewpoint_selection \
-  --min-viewpoints-per-object 3
+  --bbox-metric max_axis \
+  --connector and \
+  --threshold-profile low_small \
+  --low-small-categories toilet vase potted_plant \
+  --bbox-per-cat bed=0.10 couch=0.10 chair=0.05 tv=0.05 potted_plant=0.02 toilet=0.02 \
+  --vis-per-cat bed=0.10 couch=0.10 chair=0.025 tv=0.025 potted_plant=0.005 toilet=0.01 \
+  --min-fill-ratio 0.40 \
+  --min-axis 0.10 \
+  --max-min-axis-per-cat bed=0.92 \
+  --max-distance 0.89 \
+  --max-accepted-image-fraction 1.0 \
+  --max-accepted-image-fraction-per-cat bed=0.56 \
+  --reject-flags full_frame_sentinel_mask tiny_sentinel_mask \
+  --min-viewpoints-per-object 1 \
+  --top-k 8
 ```
 
-The selector is also static. It classifies candidates as `accepted`, `review`, or `rejected`; full-frame, near-full-frame, and tiny masks are rejected by default, while very-large masks require review by default. It writes per-category and per-object feasibility summaries plus prototype `view_points` records for accepted candidates.
+The selector is also static. It classifies candidates as `accepted`, `review`,
+or `rejected`; the current train-quality profile uses `max_axis` bbox size,
+`AND` visibility gating, per-category thresholds, fill/min-axis filters, and a
+category-specific bed close-up cap. It writes per-category and per-object
+feasibility summaries plus prototype `view_points` records for accepted
+candidates.
+
+Use `build_fixed_camera_visual_qa_pack.py --render-missing` when Stage 1 debug
+images were capped. Stage 3 can now re-render accepted/review candidates into a
+2x3 RGB/overlay/mask/BEV/text/depth composite with FoV and look-at diagnostics.
 
 For targeted retry runs, the prototype supports exact filters:
 
